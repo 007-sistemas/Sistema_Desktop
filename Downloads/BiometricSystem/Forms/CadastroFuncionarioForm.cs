@@ -210,6 +210,8 @@ namespace BiometricSystem.Forms
                 if (_allUsers != null && _allUsers.Count > 0)
                 {
                     labelStatus.Text = $"✓ {_allUsers.Count} usuários carregados com sucesso!";
+                    // Preencher ListBox com todos os usuários
+                    RefreshUserList();
                 }
                 else
                 {
@@ -220,6 +222,19 @@ namespace BiometricSystem.Forms
             {
                 labelStatus.Text = $"❌ Erro ao carregar usuários: {ex.Message}";
                 MessageBox.Show($"Erro ao conectar com o servidor:\n{ex.Message}\n\nCertifique-se de que a API está disponível em:\n{API_BASE_URL}", "Erro de Conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RefreshUserList()
+        {
+            listBoxResultados.Items.Clear();
+            foreach (var user in _allUsers)
+            {
+                listBoxResultados.Items.Add(new UserDisplayItem 
+                { 
+                    Id = user.Id, 
+                    DisplayText = $"{user.Name} ({user.Matricula}) - {user.Categoria}"
+                });
             }
         }
 
@@ -251,9 +266,12 @@ namespace BiometricSystem.Forms
 
             listBoxResultados.Items.Clear();
 
+            // Se a pesquisa estiver vazia, mostrar todos os usuários
             if (string.IsNullOrWhiteSpace(pesquisa))
             {
-                labelStatus.Text = "Digite o nome do funcionário para pesquisar";
+                RefreshUserList();
+                if (_allUsers.Count > 0)
+                    labelStatus.Text = $"Mostrando todos os {_allUsers.Count} funcionário(s)";
                 return;
             }
 
@@ -269,7 +287,7 @@ namespace BiometricSystem.Forms
                 listBoxResultados.Items.Add(new UserDisplayItem
                 {
                     Id = user.Id,
-                    DisplayText = $"{user.Name} (Mat: {user.Matricula})"
+                    DisplayText = $"{user.Name} (Mat: {user.Matricula}) - {user.Categoria}"
                 });
             }
 
