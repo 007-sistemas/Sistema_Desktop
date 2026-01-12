@@ -3,7 +3,7 @@
 ## ✅ Executar
 
 ```
-C:\Users\aride\Downloads\BiometricSystem\bin\publish\BiometricSystem.exe
+C:\Users\seu usuario\Downloads\BiometricSystem\bin\publish\BiometricSystem.exe
 ```
 
 ## 📋 Funcionalidades
