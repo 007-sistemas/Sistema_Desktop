@@ -6,7 +6,7 @@ namespace BiometricSystem.Forms
     public partial class DashboardForm : Form
     {
         private readonly DatabaseHelper database;
-        private Timer refreshTimer;
+        private System.Windows.Forms.Timer refreshTimer;
 
         public DashboardForm()
         {
@@ -21,7 +21,7 @@ namespace BiometricSystem.Forms
             LoadTimeRecords();
             
             // Timer para atualizar automaticamente a cada 5 segundos
-            refreshTimer = new Timer();
+            refreshTimer = new System.Windows.Forms.Timer();
             refreshTimer.Interval = 5000; // 5 segundos
             refreshTimer.Tick += (s, e) => LoadTimeRecords();
             refreshTimer.Start();
@@ -113,7 +113,7 @@ namespace BiometricSystem.Forms
                         allRecords.Add((
                             record.Id,
                             emp.Name,
-                            DateTime.Parse(record.Timestamp).ToString("dd/MM/yyyy HH:mm:ss"),
+                            DateTime.Parse(record.Timestamp.ToString("o")).ToString("dd/MM/yyyy HH:mm:ss"),
                             record.Type,
                             record.Notes ?? ""
                         ));

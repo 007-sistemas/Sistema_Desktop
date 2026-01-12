@@ -11,7 +11,7 @@ namespace BiometricSystem.Services
     /// Serviço de biometria usando DigitalPersona One Touch SDK
     /// Implementação direta com as DLLs do SDK do DigitalPersona
     /// </summary>
-    public class FingerprintService : IDisposable
+    public partial class FingerprintService : IDisposable
     {
         private DPFP.Capture.Capture? _capturer;
         private DPFP.Processing.Enrollment? _enroller;

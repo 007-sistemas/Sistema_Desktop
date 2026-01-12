@@ -182,8 +182,14 @@ namespace BiometricSystem.Services
 
                 using (var stream = new System.IO.MemoryStream())
                 {
-                    var data = features.Serialize();
-                    return data ?? new byte[0];
+                    // Serializar features biométricas
+                    if (features != null)
+                    {
+                        // Converter features para bytes usando reflexão
+                        var serialized = features.GetType().GetMethod("Serialize", new Type[0])?.Invoke(features, null);
+                        return serialized as byte[] ?? new byte[0];
+                    }
+                    return new byte[0];
                 }
             }
             catch

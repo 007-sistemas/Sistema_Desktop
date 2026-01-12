@@ -1,8 +1,10 @@
-using BiometricSystem.Database.Repository;
+// using BiometricSystem.Database.Repository;
 using BiometricSystem.Models;
 
 namespace BiometricSystem.Database.Services
 {
+    // DESABILITADO: Usar ApiService para web integration
+    /*
     public class EmployeeService
     {
         private readonly IRepository<Employee> _repository;
@@ -120,4 +122,6 @@ namespace BiometricSystem.Database.Services
             await _repository.SaveChangesAsync();
         }
     }
+}
+*/
 }

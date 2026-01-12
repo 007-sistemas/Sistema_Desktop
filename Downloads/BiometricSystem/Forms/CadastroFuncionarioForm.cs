@@ -67,7 +67,7 @@ namespace BiometricSystem.Forms
             textBoxPesquisa.Size = new System.Drawing.Size(540, 30);
             textBoxPesquisa.Font = new System.Drawing.Font("Arial", 11);
             textBoxPesquisa.TextChanged += TextBoxPesquisa_TextChanged;
-            textBoxPesquisa.Placeholder = "Digite o nome do funcionário...";
+            // textBoxPesquisa.Placeholder = "Digite o nome do funcionário..."; // TextBox não suporta Placeholder em WinForms antigos
             this.Controls.Add(textBoxPesquisa);
 
             // ListBox de Resultados

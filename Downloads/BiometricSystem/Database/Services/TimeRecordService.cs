@@ -1,8 +1,10 @@
-using BiometricSystem.Database.Repository;
+// using BiometricSystem.Database.Repository;
 using BiometricSystem.Models;
 
 namespace BiometricSystem.Database.Services
 {
+    // DESABILITADO: Usar ApiService para web integration
+    /*
     public class TimeRecordService
     {
         private readonly IRepository<TimeRecord> _recordRepository;
@@ -141,4 +143,6 @@ namespace BiometricSystem.Database.Services
             await _recordRepository.SaveChangesAsync();
         }
     }
+}
+*/
 }
