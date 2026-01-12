@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" Name="Sistema Biométrico" Language="1046" Version="1.0.0.0" Manufacturer="BiometricSystem" UpgradeCode="12345678-1234-1234-1234-123456789012">
+        <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+        <MajorUpgrade DowngradeErrorMessage="Uma versão mais recente do Sistema Biométrico já está instalada." />
+        <MediaTemplate EmbedCab="yes" />
+
+        <Feature Id="ProductFeature" Title="Sistema Biométrico" Level="1">
+            <ComponentRef Id="MainExecutableComponent" />
+            <ComponentRef Id="ConfigFileComponent" />
+            <ComponentRef Id="DatabaseComponent" />
+            <ComponentRef Id="SDKComponent" />
+        </Feature>
+
+        <!-- Interface do instalador -->
+        <UI>
+            <UIRef Id="WixUI_InstallDir" />
+            <UIRef Id="WixUI_ErrorProgressText" />
+        </UI>
+        <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+        <WixVariable Id="WixUIInstallDirectory" Value="INSTALLFOLDER" />
+    </Product>
+
+    <Fragment>
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="BiometricSystem" />
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationProgramsFolder" Name="Sistema Biométrico" />
+            </Directory>
+        </Directory>
+    </Fragment>
+
+    <Fragment>
+        <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+            <!-- Executável principal -->
+            <Component Id="MainExecutableComponent">
+                <File Id="BiometricSystemExe" Source="bin\publish\BiometricSystem.exe" />
+                <ProgId Id="BiometricSystem.Application" Description="Sistema Biométrico" />
+            </Component>
+
+            <!-- Arquivos de configuração -->
+            <Component Id="ConfigFileComponent">
+                <File Id="ReadmeFile" Source="README.md" />
+            </Component>
+
+            <!-- Banco de dados (será criado automaticamente) -->
+            <Component Id="DatabaseComponent">
+                <CreateFolder />
+            </Component>
+
+            <!-- SDK DLLs -->
+            <Component Id="SDKComponent">
+                <File Id="DPFPDevNET" Source="SDK\DPFPDevNET.dll" />
+                <File Id="DPFPEngNET" Source="SDK\DPFPEngNET.dll" />
+                <File Id="DPFPGuiNET" Source="SDK\DPFPGuiNET.dll" />
+                <File Id="DPFPShrNET" Source="SDK\DPFPShrNET.dll" />
+                <File Id="DPFPVerNET" Source="SDK\DPFPVerNET.dll" />
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>
