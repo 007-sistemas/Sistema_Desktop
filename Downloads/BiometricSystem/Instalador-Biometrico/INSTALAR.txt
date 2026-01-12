@@ -1,0 +1,14 @@
+# Sistema Biometrico - Instalacao
+
+## Requisitos
+- Windows 10 ou superior
+- DigitalPersona 4500 U.are Scanner conectado
+- Driver DigitalPersona instalado
+
+## Como instalar
+1. Copie toda esta pasta para C:\Program Files\BiometricSystem
+2. Execute BiometricSystem.exe
+3. O banco de dados sera criado automaticamente
+
+## Suporte
+Para erros, verifique se o driver do scanner esta instalado.
