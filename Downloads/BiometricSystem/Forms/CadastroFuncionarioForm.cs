@@ -202,11 +202,24 @@ namespace BiometricSystem.Forms
                 _apiService = new ApiService(API_BASE_URL);
 
                 // Carregar usuários
-                await CarregarUsuarios();
+                labelStatus.Text = "⏳ Carregando usuários do servidor...";
+                this.Refresh(); // Força atualização da tela
+                
+                _allUsers = await _apiService.GetUsersAsync();
+
+                if (_allUsers != null && _allUsers.Count > 0)
+                {
+                    labelStatus.Text = $"✓ {_allUsers.Count} usuários carregados com sucesso!";
+                }
+                else
+                {
+                    labelStatus.Text = "⚠ Nenhum usuário encontrado no servidor";
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erro ao inicializar: {ex.Message}");
+                labelStatus.Text = $"❌ Erro ao carregar usuários: {ex.Message}";
+                MessageBox.Show($"Erro ao conectar com o servidor:\n{ex.Message}\n\nCertifique-se de que a API está disponível em:\n{API_BASE_URL}", "Erro de Conexão", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -214,7 +227,7 @@ namespace BiometricSystem.Forms
         {
             try
             {
-                labelStatus.Text = "Carregando usuários do servidor...";
+                labelStatus.Text = "⏳ Carregando usuários do servidor...";
                 _allUsers = await _apiService.GetUsersAsync();
 
                 if (_allUsers != null && _allUsers.Count > 0)
