@@ -1,0 +1,636 @@
+using Npgsql;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
+
+namespace BiometricSystem.Database
+{
+    /// <summary>
+    /// Helper para consultarcooperados da tabela 'cooperados' do Neon
+    /// </summary>
+    public class NeonCooperadoHelper
+    {
+        private readonly string _connectionString;
+        private static string LogPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric_log.txt");
+
+        public NeonCooperadoHelper(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
+
+        private void Log(string message)
+        {
+            try
+            {
+                string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
+                File.AppendAllText(LogPath, logMessage + Environment.NewLine);
+                Debug.WriteLine(logMessage);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Modelo para representar um cooperado
+        /// </summary>
+        public class Cooperado
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Nome { get; set; } = string.Empty;
+            public string? Cpf { get; set; }
+            public string? Email { get; set; }
+            public string? Telefone { get; set; }
+            public DateTime? CriadoEm { get; set; }
+            public bool Ativo { get; set; } = true;
+
+            public override string ToString()
+            {
+                return $"{Nome}";
+            }
+        }
+
+        /// <summary>
+        /// Salva uma biometria na tabela 'biometrias' do NEON
+        /// </summary>
+        public async Task<bool> SalvarBiometriaAsync(string cooperadoId, byte[] template, int fingerIndex = 0)
+        {
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // Gerar hash do template
+                string hash = GerarHashBiometria(template);
+
+                string query = @"
+                    INSERT INTO biometrias (cooperado_id, finger_index, hash, template, created_at)
+                    VALUES (@cooperado_id, @finger_index, @hash, @template, NOW())";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
+                cmd.Parameters.AddWithValue("@finger_index", fingerIndex);
+                cmd.Parameters.AddWithValue("@hash", hash);
+                cmd.Parameters.AddWithValue("@template", template);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                Debug.WriteLine($"✅ Biometria salva no NEON. Rows affected: {rowsAffected}");
+
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao salvar biometria no NEON: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gera um hash SHA256 do template biométrico
+        /// </summary>
+        private string GerarHashBiometria(byte[] template)
+        {
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(template);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+        }
+
+        /// <summary>
+        /// Busca todas as biometrias cadastradas no NEON
+        /// </summary>
+        public async Task<List<BiometriaRecord>> GetAllBiometriasAsync()
+        {
+            var biometrias = new List<BiometriaRecord>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Log("🔍 Iniciando busca de biometrias no NEON...");
+                Log($"   Connection String: {_connectionString.Substring(0, Math.Min(80, _connectionString.Length))}...");
+                
+                try
+                {
+                    Log("   Criando objeto NpgsqlConnection...");
+                    connection = new NpgsqlConnection(_connectionString);
+                    Log("   ✓ Objeto NpgsqlConnection criado com sucesso");
+                    
+                    Log("   Abrindo conexão (OpenAsync)...");
+                    await connection.OpenAsync();
+                    Log("✅ Conexão com NEON aberta com sucesso");
+                }
+                catch (Exception connEx)
+                {
+                    Log($"❌ ERRO NA CONEXÃO: {connEx.Message}");
+                    Log($"   Tipo: {connEx.GetType().Name}");
+                    if (connEx.InnerException != null)
+                        Log($"   Inner: {connEx.InnerException.Message}");
+                    throw;
+                }
+
+                // Primeiro, verificar se a tabela existe e tem dados
+                string checkQuery = "SELECT COUNT(*) FROM biometrias";
+                try
+                {
+                    using var checkCmd = new NpgsqlCommand(checkQuery, connection);
+                    checkCmd.CommandTimeout = 5; // Timeout de 5 segundos
+                    var totalRecords = await checkCmd.ExecuteScalarAsync();
+                    Log($"📊 Total de registros na tabela biometrias: {totalRecords}");
+                }
+                catch (Exception checkEx)
+                {
+                    Log($"⚠️ Erro ao verificar tabela: {checkEx.Message}");
+                }
+
+                string query = @"
+                    SELECT b.id, b.cooperado_id, b.finger_index, b.template, c.name
+                    FROM biometrias b
+                    INNER JOIN cooperados c ON b.cooperado_id = c.id
+                    ORDER BY b.created_at_db DESC
+                    LIMIT 500";
+
+                Log($"📋 Executando query principal...");
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.CommandTimeout = 15; // Timeout de 15 segundos
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                int count = 0;
+                while (await reader.ReadAsync())
+                {
+                    count++;
+                    var biometria = new BiometriaRecord
+                    {
+                        Id = reader.GetString(0),
+                        CooperadoId = reader.GetString(1),
+                        FingerIndex = reader.GetInt32(2),
+                        Template = (byte[])reader.GetValue(3),
+                        CooperadoNome = reader.GetString(4)
+                    };
+                    biometrias.Add(biometria);
+                    Log($"   ✓ Biometria {count}: {biometria.CooperadoNome} (ID: {biometria.CooperadoId}, Template: {biometria.Template.Length} bytes)");
+                }
+
+                Log($"✅ {biometrias.Count} biometrias carregadas do NEON");
+                return biometrias;
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ Erro ao buscar biometrias: {ex.Message}");
+                Log($"   Stack: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Log($"   Inner: {ex.InnerException.Message}");
+                }
+                return biometrias;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Registra um ponto (entrada/saída) na tabela 'pontos' do NEON
+        /// </summary>
+        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local)
+        {
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Log($"📤 Iniciando registro de ponto no NEON: {cooperadoNome} - {tipo}");
+                
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                // Gerar IDs únicos para o registro
+                string id = Guid.NewGuid().ToString();
+                string codigo = Guid.NewGuid().ToString();
+
+                // Query com ID fornecido pelo cliente
+                string query = @"
+                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local)
+                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local)";
+
+                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo})");
+                
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.Parameters.AddWithValue("@codigo", codigo);
+                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
+                cmd.Parameters.AddWithValue("@cooperado_nome", cooperadoNome);
+                cmd.Parameters.AddWithValue("@tipo", tipo);
+                cmd.Parameters.AddWithValue("@local", local ?? "");
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                Log($"   ✅ Ponto registrado no NEON (rows affected: {rowsAffected})");
+                
+                Debug.WriteLine($"✅ Ponto registrado no NEON. Tipo: {tipo}, Cooperado: {cooperadoNome}");
+
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Log($"   ❌ ERRO ao registrar ponto: {ex.Message}");
+                Log($"      Type: {ex.GetType().Name}");
+                Log($"      Full Exception: {ex}");
+                if (ex.InnerException != null)
+                    Log($"      Inner: {ex.InnerException.Message}");
+                
+                Debug.WriteLine($"❌ Erro ao registrar ponto no NEON: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Busca o último registro de ponto de um cooperado
+        /// </summary>
+        public async Task<PontoRecord?> GetUltimoPontoAsync(string cooperadoId)
+        {
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                string query = @"
+                    SELECT id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local
+                    FROM pontos
+                    WHERE cooperado_id = @cooperado_id
+                    ORDER BY timestamp DESC
+                    LIMIT 1";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    return new PontoRecord
+                    {
+                        Id = reader.GetString(0),
+                        Codigo = reader.GetString(1),
+                        CooperadoId = reader.GetString(2),
+                        CooperadoNome = reader.GetString(3),
+                        Timestamp = reader.GetDateTime(4),
+                        Tipo = reader.GetString(5),
+                        Local = reader.GetString(6)
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao buscar último ponto: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Modelo para representar uma biometria
+        /// </summary>
+        public class BiometriaRecord
+        {
+            public string Id { get; set; } = string.Empty;
+            public string CooperadoId { get; set; } = string.Empty;
+            public int FingerIndex { get; set; }
+            public byte[] Template { get; set; } = Array.Empty<byte>();
+            public string CooperadoNome { get; set; } = string.Empty;
+        }
+
+        /// <summary>
+        /// Modelo para representar um registro de ponto
+        /// </summary>
+        public class PontoRecord
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Codigo { get; set; } = string.Empty;
+            public string CooperadoId { get; set; } = string.Empty;
+            public string CooperadoNome { get; set; } = string.Empty;
+            public DateTime Timestamp { get; set; }
+            public string Tipo { get; set; } = string.Empty;
+            public string Local { get; set; } = string.Empty;
+        }
+
+        /// <summary>
+        /// Obtém todos os cooperados cadastrados no NEON
+        /// </summary>
+        public async Task<List<Cooperado>> GetCooperadosAsync()
+        {
+            var cooperados = new List<Cooperado>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                connection = new NpgsqlConnection(_connectionString);
+                Debug.WriteLine($"🔌 Abrindo conexão NEON...");
+                await connection.OpenAsync();
+                Debug.WriteLine($"✅ Conexão aberta com sucesso!");
+
+                // Primeiro, listar todas as tabelas para diagnóstico
+                string listTablesQuery = @"
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    LIMIT 20";
+                
+                using (var cmd = new NpgsqlCommand(listTablesQuery, connection))
+                {
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        Debug.WriteLine("📋 Tabelas disponíveis no NEON:");
+                        while (await reader.ReadAsync())
+                        {
+                            Debug.WriteLine($"   - {reader.GetString(0)}");
+                        }
+                    }
+                }
+
+                // Tentar a query principal - usando nome correto das colunas do NEON
+                string query = @"
+                    SELECT id, name, cpf, email, phone
+                    FROM cooperados
+                    ORDER BY name ASC
+                    LIMIT 1000";
+
+                Debug.WriteLine($"🔍 Executando query: {query.Trim()}");
+                
+                using var cmd2 = new NpgsqlCommand(query, connection);
+                using var reader2 = await cmd2.ExecuteReaderAsync();
+
+                while (await reader2.ReadAsync())
+                {
+                    cooperados.Add(new Cooperado
+                    {
+                        Id = reader2.IsDBNull(0) ? string.Empty : reader2.GetString(0),
+                        Nome = reader2.IsDBNull(1) ? string.Empty : reader2.GetString(1),
+                        Cpf = reader2.IsDBNull(2) ? null : reader2.GetString(2),
+                        Email = reader2.IsDBNull(3) ? null : reader2.GetString(3),
+                        Telefone = reader2.IsDBNull(4) ? null : reader2.GetString(4),
+                        CriadoEm = DateTime.Now,
+                        Ativo = true
+                    });
+                }
+
+                Debug.WriteLine($"✅ {cooperados.Count} cooperados carregados do NEON");
+                return cooperados;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao obter cooperados do NEON: {ex.Message}");
+                Debug.WriteLine($"Exception Type: {ex.GetType().Name}");
+                Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                }
+                Debug.WriteLine($"Connection String (primeiros 60 chars): {_connectionString.Substring(0, Math.Min(60, _connectionString.Length))}...");
+                return new List<Cooperado>();
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Obtém um cooperado específico pelo ID
+        /// </summary>
+        public async Task<Cooperado> GetCooperadoByIdAsync(string id)
+        {
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                string query = @"
+                    SELECT id, name, cpf, email, phone
+                    FROM cooperados
+                    WHERE id = @id";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@id", id);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                if (await reader.ReadAsync())
+                {
+                    return new Cooperado
+                    {
+                        Id = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                        Nome = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                        Cpf = reader.IsDBNull(2) ? null : reader.GetString(2),
+                        Email = reader.IsDBNull(3) ? null : reader.GetString(3),
+                        Telefone = reader.IsDBNull(4) ? null : reader.GetString(4),
+                        CriadoEm = DateTime.Now,
+                        Ativo = true
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao obter cooperado {id}: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Pesquisa cooperados por nome
+        /// </summary>
+        public async Task<List<Cooperado>> SearchCooperadosAsync(string searchTerm)
+        {
+            var cooperados = new List<Cooperado>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                string query = @"
+                    SELECT id, name, cpf, email, phone
+                    FROM cooperados
+                    WHERE 
+                        name ILIKE @search OR 
+                        cpf ILIKE @search OR 
+                        email ILIKE @search
+                    ORDER BY name ASC
+                    LIMIT 100";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@search", $"%{searchTerm}%");
+
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    cooperados.Add(new Cooperado
+                    {
+                        Id = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                        Nome = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                        Cpf = reader.IsDBNull(2) ? null : reader.GetString(2),
+                        Email = reader.IsDBNull(3) ? null : reader.GetString(3),
+                        Telefone = reader.IsDBNull(4) ? null : reader.GetString(4),
+                        CriadoEm = DateTime.Now,
+                        Ativo = true
+                    });
+                }
+
+                return cooperados;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao pesquisar cooperados: {ex.Message}");
+                return new List<Cooperado>();
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Testa a conexão com NEON e a tabela 'cooperados'
+        /// </summary>
+        public async Task<bool> TestConnectionAsync()
+        {
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Debug.WriteLine($"🔍 Testando conexão com NEON...");
+                connection = new NpgsqlConnection(_connectionString);
+                await connection.OpenAsync();
+
+                Debug.WriteLine($"✅ Conexão aberta com sucesso!");
+
+                // Verificar se a tabela existe
+                string query = @"
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_name = 'cooperados' 
+                    AND table_schema = 'public'";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                var result = await cmd.ExecuteScalarAsync();
+
+                if (result != null)
+                {
+                    Debug.WriteLine("✅ Conexão com NEON bem-sucedida! Tabela 'cooperados' encontrada.");
+                    
+                    // Contar registros
+                    string countQuery = "SELECT COUNT(*) FROM cooperados";
+                    using var countCmd = new NpgsqlCommand(countQuery, connection);
+                    var count = await countCmd.ExecuteScalarAsync();
+                    Debug.WriteLine($"📊 Total de cooperados no NEON: {count}");
+                    
+                    return true;
+                }
+                else
+                {
+                    Debug.WriteLine("❌ Tabela 'cooperados' não encontrada no NEON");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao conectar com NEON: {ex.Message}");
+                Debug.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                return false;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
+    }
+}
