@@ -642,5 +642,123 @@ namespace BiometricSystem.Database
                 }
             }
         }
+
+        /// <summary>
+        /// Modelo para representar um hospital
+        /// </summary>
+        public class Hospital
+        {
+            public string Id { get; set; } = string.Empty;
+            public string Nome { get; set; } = string.Empty;
+            public string Codigo { get; set; } = string.Empty;
+
+            public override string ToString() => $"{Codigo} - {Nome}";
+        }
+
+        /// <summary>
+        /// Busca todos os hospitais cadastrados
+        /// </summary>
+        public async Task<List<Hospital>> GetHospitaisAsync()
+        {
+            var hospitais = new List<Hospital>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Log("🏥 Buscando hospitais no NEON...");
+                connection = new NpgsqlConnection(_pooledConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT id, hospital, setor FROM hospitais ORDER BY hospital";
+                using var cmd = new NpgsqlCommand(query, connection);
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var hospital = new Hospital
+                    {
+                        Id = reader.GetString(0),
+                        Nome = reader.GetString(1),
+                        Codigo = reader.IsDBNull(2) ? "" : reader.GetString(2)
+                    };
+                    hospitais.Add(hospital);
+                }
+
+                Log($"   ✅ {hospitais.Count} hospitais encontrados");
+            }
+            catch (Exception ex)
+            {
+                Log($"   ❌ Erro ao buscar hospitais: {ex.Message}");
+                Debug.WriteLine($"❌ Erro ao buscar hospitais: {ex.Message}");
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+
+            return hospitais;
+        }
+
+        /// <summary>
+        /// Busca os setores de um hospital específico
+        /// </summary>
+        public async Task<List<string>> GetSetoresDoHospitalAsync(string hospitalId)
+        {
+            var setores = new List<string>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Log($"🏥 Buscando setores do hospital {hospitalId}...");
+                connection = new NpgsqlConnection(_pooledConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"
+                    SELECT s.setor 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.setor";
+
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@hospital_id", hospitalId);
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    string setor = reader.GetString(0);
+                    setores.Add(setor);
+                }
+
+                Log($"   ✅ {setores.Count} setores encontrados");
+            }
+            catch (Exception ex)
+            {
+                Log($"   ❌ Erro ao buscar setores: {ex.Message}");
+                Debug.WriteLine($"❌ Erro ao buscar setores: {ex.Message}");
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+
+            return setores;
+        }
     }
 }

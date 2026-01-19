@@ -16,20 +16,8 @@ namespace BiometricSystem.Forms
         private string? neonConnectionString;
         private string? selectedSetor;
         private bool isCapturing = false;
-
-        // Lista de setores disponíveis
-        private readonly List<string> setores = new List<string>
-        {
-            "CENTRO CIRÚRGICO",
-            "EMERGÊNCIA",
-            "UTI",
-            "ENFERMARIA",
-            "LABORATÓRIO",
-            "RADIOLOGIA",
-            "FARMÁCIA",
-            "RECEPÇÃO",
-            "ADMINISTRATIVO"
-        };
+        private string? hospitalId;
+        private string? hospitalNome;
 
         public LoginForm(IConfiguration? config = null)
         {
@@ -42,6 +30,10 @@ namespace BiometricSystem.Forms
             {
                 neonConnectionString = config.GetConnectionString("DefaultConnection") 
                     ?? config["Neon:ConnectionString"];
+                
+                // Carregar configuração do hospital
+                hospitalId = config["Hospital:Id"];
+                hospitalNome = config["Hospital:Nome"];
                 
                 if (!string.IsNullOrEmpty(neonConnectionString))
                 {
@@ -56,6 +48,12 @@ namespace BiometricSystem.Forms
             {
                 neonConnectionString = "Host=ep-dry-dawn-ahl0dlm6-pooler.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_lOhyE4z1QBtc;SSL Mode=Require;Trust Server Certificate=true";
                 neonHelper = new NeonCooperadoHelper(neonConnectionString);
+            }
+
+            // Atualizar label com nome do hospital
+            if (!string.IsNullOrEmpty(hospitalNome))
+            {
+                lblLocalProducao.Text = $"🏥 {hospitalNome}";
             }
 
             // Configurar eventos do serviço biométrico
@@ -73,9 +71,8 @@ namespace BiometricSystem.Forms
 
             fingerprintService.OnFingerprintCaptured += OnFingerprintCaptured;
             
-            // Carregar setores no ComboBox
-            cmbSetor.Items.AddRange(setores.ToArray());
-            cmbSetor.SelectedIndex = -1;
+            // Carregar setores do hospital
+            CarregarSetoresDoHospital();
             
             // Inicializar leitor em segundo plano
             Task.Run(() =>
@@ -137,6 +134,53 @@ namespace BiometricSystem.Forms
                     btnRegister.Region = new Region(path);
                 }
             };
+        }
+
+        private async void CarregarSetoresDoHospital()
+        {
+            if (string.IsNullOrEmpty(hospitalId) || neonHelper == null)
+            {
+                // Fallback: usar lista padrão se não tiver hospital configurado
+                cmbSetor.Items.Clear();
+                cmbSetor.Items.AddRange(new string[] 
+                {
+                    "CENTRO CIRÚRGICO",
+                    "EMERGÊNCIA",
+                    "UTI",
+                    "ENFERMARIA",
+                    "LABORATÓRIO",
+                    "RADIOLOGIA",
+                    "FARMÁCIA",
+                    "RECEPÇÃO",
+                    "ADMINISTRATIVO"
+                });
+                cmbSetor.SelectedIndex = -1;
+                return;
+            }
+
+            try
+            {
+                lblStatus.Text = "⏳ Carregando setores...";
+                var setores = await neonHelper.GetSetoresDoHospitalAsync(hospitalId);
+                
+                if (setores.Any())
+                {
+                    cmbSetor.Items.Clear();
+                    cmbSetor.Items.AddRange(setores.ToArray());
+                    cmbSetor.SelectedIndex = -1;
+                    lblStatus.Text = "✅ Setores carregados. Selecione o setor.";
+                }
+                else
+                {
+                    lblStatus.Text = "⚠️ Nenhum setor encontrado para este hospital.";
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar setores: {ex.Message}", "Erro", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "❌ Erro ao carregar setores.";
+            }
         }
 
         private GraphicsPath GetRoundedRectangle(Rectangle rect, int radius)
