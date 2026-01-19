@@ -7,16 +7,26 @@ using System.Threading.Tasks;
 namespace BiometricSystem.Database
 {
     /// <summary>
-    /// Helper para consultarcooperados da tabela 'cooperados' do Neon
+    /// Helper para consultar cooperados da tabela 'cooperados' do Neon
+    /// Com Connection Pooling para evitar limite de conexões
     /// </summary>
     public class NeonCooperadoHelper
     {
         private readonly string _connectionString;
         private static string LogPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric_log.txt");
+        
+        // Connection String com pooling configurado
+        private readonly string _pooledConnectionString;
 
         public NeonCooperadoHelper(string connectionString)
         {
             _connectionString = connectionString;
+            
+            // Adicionar configurações de pooling à connection string
+            // MaxPoolSize: limite máximo de conexões no pool (padrão: 20)
+            // MinPoolSize: mínimo de conexões mantidas abertas (padrão: 1)
+            // ConnectionIdleLifetime: segundos antes de fechar uma conexão ociosa (padrão: 300)
+            _pooledConnectionString = $"{connectionString};MaxPoolSize=10;MinPoolSize=1;ConnectionIdleLifetime=60;";
         }
 
         private void Log(string message)
@@ -58,7 +68,7 @@ namespace BiometricSystem.Database
 
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 // Gerar hash do template
@@ -126,7 +136,7 @@ namespace BiometricSystem.Database
                 try
                 {
                     Log("   Criando objeto NpgsqlConnection...");
-                    connection = new NpgsqlConnection(_connectionString);
+                    connection = new NpgsqlConnection(_pooledConnectionString);
                     Log("   ✓ Objeto NpgsqlConnection criado com sucesso");
                     
                     Log("   Abrindo conexão (OpenAsync)...");
@@ -222,7 +232,7 @@ namespace BiometricSystem.Database
             {
                 Log($"📤 Iniciando registro de ponto no NEON: {cooperadoNome} - {tipo}");
                 
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 // Gerar IDs únicos para o registro
@@ -285,7 +295,7 @@ namespace BiometricSystem.Database
 
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"
@@ -371,7 +381,7 @@ namespace BiometricSystem.Database
 
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 Debug.WriteLine($"🔌 Abrindo conexão NEON...");
                 await connection.OpenAsync();
                 Debug.WriteLine($"✅ Conexão aberta com sucesso!");
@@ -459,7 +469,7 @@ namespace BiometricSystem.Database
 
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"
@@ -517,7 +527,7 @@ namespace BiometricSystem.Database
 
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"
@@ -580,7 +590,7 @@ namespace BiometricSystem.Database
             try
             {
                 Debug.WriteLine($"🔍 Testando conexão com NEON...");
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
                 Debug.WriteLine($"✅ Conexão aberta com sucesso!");
