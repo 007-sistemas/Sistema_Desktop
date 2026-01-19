@@ -224,7 +224,7 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Registra um ponto (entrada/saída) na tabela 'pontos' do NEON
         /// </summary>
-        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local, string? hospitalId = null)
+        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local, string? hospitalId = null, int? setorId = null)
         {
             NpgsqlConnection? connection = null;
 
@@ -239,12 +239,12 @@ namespace BiometricSystem.Database
                 string id = Guid.NewGuid().ToString();
                 string codigo = Guid.NewGuid().ToString();
 
-                // Query incluindo hospital_id para compatibilidade com sistema web
+                // Query incluindo hospital_id e setor_id para compatibilidade com sistema web
                 string query = @"
-                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local, hospital_id)
-                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local, @hospital_id)";
+                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local, hospital_id, setor_id)
+                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local, @hospital_id, @setor_id)";
 
-                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo}, hospital_id={hospitalId})");
+                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo}, hospital_id={hospitalId}, setor_id={setorId})");
                 
                 using var cmd = new NpgsqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@id", id);
@@ -254,6 +254,7 @@ namespace BiometricSystem.Database
                 cmd.Parameters.AddWithValue("@tipo", tipo);
                 cmd.Parameters.AddWithValue("@local", local ?? "");
                 cmd.Parameters.AddWithValue("@hospital_id", (object?)hospitalId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@setor_id", (object?)setorId ?? DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 Log($"   ✅ Ponto registrado no NEON (rows affected: {rowsAffected})");
@@ -656,6 +657,14 @@ namespace BiometricSystem.Database
             public override string ToString() => $"{Codigo} - {Nome}";
         }
 
+        public class SetorInfo
+        {
+            public int Id { get; set; }
+            public string Nome { get; set; } = string.Empty;
+
+            public override string ToString() => Nome;
+        }
+
         /// <summary>
         /// Busca todos os hospitais cadastrados (distintos, agrupados)
         /// </summary>
@@ -721,11 +730,11 @@ namespace BiometricSystem.Database
         }
 
         /// <summary>
-        /// Busca os setores de um hospital específico
+        /// Busca os setores de um hospital específico com ID e nome
         /// </summary>
-        public async Task<List<string>> GetSetoresDoHospitalAsync(string hospitalId)
+        public async Task<List<SetorInfo>> GetSetoresDoHospitalAsync(string hospitalId)
         {
-            var setores = new List<string>();
+            var setores = new List<SetorInfo>();
             NpgsqlConnection? connection = null;
 
             try
@@ -736,7 +745,7 @@ namespace BiometricSystem.Database
                 Log("   ✅ Conexão estabelecida");
 
                 string query = @"
-                    SELECT DISTINCT s.nome 
+                    SELECT DISTINCT s.id, s.nome 
                     FROM hospital_setores hs
                     INNER JOIN setores s ON hs.setor_id = s.id
                     WHERE hs.hospital_id = @hospital_id
@@ -752,9 +761,13 @@ namespace BiometricSystem.Database
                 while (await reader.ReadAsync())
                 {
                     count++;
-                    string setor = reader.GetString(0);
+                    var setor = new SetorInfo
+                    {
+                        Id = reader.GetInt32(0),
+                        Nome = reader.GetString(1)
+                    };
                     setores.Add(setor);
-                    Log($"   🏢 Setor #{count}: {setor}");
+                    Log($"   🏢 Setor #{count}: ID={setor.Id}, Nome={setor.Nome}");
                 }
 
                 Log($"   ✅ Total: {setores.Count} setores encontrados");

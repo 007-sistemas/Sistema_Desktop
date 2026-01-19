@@ -15,9 +15,11 @@ namespace BiometricSystem.Forms
         private NeonCooperadoHelper? neonHelper;
         private string? neonConnectionString;
         private string? selectedSetor;
+        private int? selectedSetorId;
         private bool isCapturing = false;
         private string? hospitalId;
         private string? hospitalNome;
+        private string? hospitalCodigo;
 
         public LoginForm(IConfiguration? config = null)
         {
@@ -34,6 +36,8 @@ namespace BiometricSystem.Forms
                 // Carregar configuração do hospital
                 hospitalId = config["Hospital:Id"];
                 hospitalNome = config["Hospital:Nome"];
+                hospitalCodigo = config["Hospital:Codigo"];
+                hospitalCodigo = config["Hospital:Codigo"];
                 
                 if (!string.IsNullOrEmpty(neonConnectionString))
                 {
@@ -167,6 +171,8 @@ namespace BiometricSystem.Forms
                 {
                     cmbSetor.Items.Clear();
                     cmbSetor.Items.AddRange(setores.ToArray());
+                    cmbSetor.DisplayMember = "Nome";
+                    cmbSetor.ValueMember = "Id";
                     cmbSetor.SelectedIndex = -1;
                     lblStatus.Text = "✅ Setores carregados. Selecione o setor.";
                 }
@@ -249,7 +255,18 @@ namespace BiometricSystem.Forms
             if (cmbSetor.SelectedIndex == -1 || isCapturing)
                 return;
 
-            selectedSetor = cmbSetor.SelectedItem?.ToString();
+            // Capturar setor e ID do setor selecionado
+            if (cmbSetor.SelectedItem is NeonCooperadoHelper.SetorInfo setorInfo)
+            {
+                selectedSetor = setorInfo.Nome;
+                selectedSetorId = setorInfo.Id;
+            }
+            else
+            {
+                // Fallback para string simples (lista padrão)
+                selectedSetor = cmbSetor.SelectedItem?.ToString();
+                selectedSetorId = null;
+            }
             
             if (!string.IsNullOrEmpty(selectedSetor))
             {
@@ -339,12 +356,17 @@ namespace BiometricSystem.Forms
 
                     LogToFile($"   Tipo de registro: {tipoRegistro}");
 
+                    // Formatar local como no sistema web: "CODIGO_HOSPITAL - SETOR"
+                    string localFormatado = string.IsNullOrEmpty(hospitalCodigo) 
+                        ? (selectedSetor ?? "N/A")
+                        : $"{hospitalCodigo} - {selectedSetor ?? "N/A"}";
+
                     // Registrar ponto LOCAL (instantâneo)
                     bool sucessoLocal = database.SalvarPontoLocal(
                         matchedCooperadoId,
                         matchedCooperadoNome,
                         tipoRegistro,
-                        selectedSetor ?? "N/A"
+                        localFormatado
                     );
 
                     if (sucessoLocal)
@@ -523,7 +545,8 @@ namespace BiometricSystem.Forms
                             ponto.CooperadoNome,
                             ponto.Tipo,
                             ponto.Local,
-                            hospitalId
+                            hospitalId,
+                            selectedSetorId
                         );
 
                         if (sucesso)
