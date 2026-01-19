@@ -123,14 +123,20 @@ namespace BiometricSystem.Forms
 
                 hospitais = await neonHelper.GetHospitaisAsync();
 
-                if (hospitais.Count == 0)
+                if (hospitais == null || hospitais.Count == 0)
                 {
                     MessageBox.Show(
-                        "Nenhum hospital encontrado no banco de dados.\n\nVerifique a conexão com o NEON.",
+                        "Nenhum hospital encontrado no banco de dados.\n\n" +
+                        "Possíveis causas:\n" +
+                        "• Tabela 'hospitais' está vazia no NEON\n" +
+                        "• Problema na conexão com o banco de dados\n" +
+                        "• Credenciais inválidas\n\n" +
+                        "Verifique o arquivo de log (biometric_log.txt) para mais detalhes.",
                         "Erro",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error
                     );
+                    this.DialogResult = DialogResult.Cancel;
                     this.Close();
                     return;
                 }
@@ -146,11 +152,14 @@ namespace BiometricSystem.Forms
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Erro ao carregar hospitais:\n{ex.Message}",
+                    $"Erro ao carregar hospitais:\n\n{ex.Message}\n\n" +
+                    $"Stack trace:\n{ex.StackTrace?.Substring(0, Math.Min(200, ex.StackTrace?.Length ?? 0))}\n\n" +
+                    "Verifique o arquivo de log (biometric_log.txt) para mais detalhes.",
                     "Erro",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
+                this.DialogResult = DialogResult.Cancel;
                 this.Close();
             }
         }

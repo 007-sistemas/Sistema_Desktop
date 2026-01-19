@@ -656,25 +656,33 @@ namespace BiometricSystem.Database
         }
 
         /// <summary>
-        /// Busca todos os hospitais cadastrados
+        /// Busca todos os hospitais cadastrados (distintos, agrupados)
         /// </summary>
         public async Task<List<Hospital>> GetHospitaisAsync()
         {
             var hospitais = new List<Hospital>();
-            NpgsqlConnection connection = null;
+            NpgsqlConnection? connection = null;
 
             try
             {
                 Log("🏥 Buscando hospitais no NEON...");
                 connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
+                Log("   ✅ Conexão com NEON estabelecida");
 
-                string query = "SELECT id, hospital, setor FROM hospitais ORDER BY hospital";
+                // Buscar da tabela correta: hospitals
+                string query = "SELECT id, hospital, setor FROM hospitals ORDER BY hospital LIMIT 20";
+                Log($"   📝 Query SQL: {query}");
+                    
                 using var cmd = new NpgsqlCommand(query, connection);
                 using var reader = await cmd.ExecuteReaderAsync();
-
+                
+                Log("   🔍 Executando query...");
+                int count = 0;
+                
                 while (await reader.ReadAsync())
                 {
+                    count++;
                     var hospital = new Hospital
                     {
                         Id = reader.GetString(0),
@@ -682,14 +690,17 @@ namespace BiometricSystem.Database
                         Codigo = reader.IsDBNull(2) ? "" : reader.GetString(2)
                     };
                     hospitais.Add(hospital);
+                    Log($"   🏥 Hospital #{count}: ID={hospital.Id}, Nome={hospital.Nome}, Codigo={hospital.Codigo}");
                 }
 
-                Log($"   ✅ {hospitais.Count} hospitais encontrados");
+                Log($"   ✅ Total: {hospitais.Count} hospitais encontrados");
             }
             catch (Exception ex)
             {
                 Log($"   ❌ Erro ao buscar hospitais: {ex.Message}");
+                Log($"   ❌ Stack trace: {ex.StackTrace}");
                 Debug.WriteLine($"❌ Erro ao buscar hospitais: {ex.Message}");
+                throw; // Re-throw para o formulário tratar
             }
             finally
             {
@@ -713,37 +724,45 @@ namespace BiometricSystem.Database
         public async Task<List<string>> GetSetoresDoHospitalAsync(string hospitalId)
         {
             var setores = new List<string>();
-            NpgsqlConnection connection = null;
+            NpgsqlConnection? connection = null;
 
             try
             {
-                Log($"🏥 Buscando setores do hospital {hospitalId}...");
+                Log($"🏢 Buscando setores do hospital {hospitalId}...");
                 connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
+                Log("   ✅ Conexão estabelecida");
 
                 string query = @"
-                    SELECT s.setor 
+                    SELECT DISTINCT s.setor 
                     FROM hospital_setores hs
                     INNER JOIN setores s ON hs.setor_id = s.id
-                    WHERE hs.hospital_id = @hospital_id
+                    WHERE hs.hospital_id = @hospital_id::uuid
                     ORDER BY s.setor";
-
+                    
+                Log($"   📝 Query SQL: {query}");
                 using var cmd = new NpgsqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@hospital_id", hospitalId);
+                cmd.Parameters.AddWithValue("@hospital_id", new Guid(hospitalId));
+                
                 using var reader = await cmd.ExecuteReaderAsync();
+                int count = 0;
 
                 while (await reader.ReadAsync())
                 {
+                    count++;
                     string setor = reader.GetString(0);
                     setores.Add(setor);
+                    Log($"   🏢 Setor #{count}: {setor}");
                 }
 
-                Log($"   ✅ {setores.Count} setores encontrados");
+                Log($"   ✅ Total: {setores.Count} setores encontrados");
             }
             catch (Exception ex)
             {
                 Log($"   ❌ Erro ao buscar setores: {ex.Message}");
+                Log($"   ❌ Stack trace: {ex.StackTrace}");
                 Debug.WriteLine($"❌ Erro ao buscar setores: {ex.Message}");
+                throw;
             }
             finally
             {
