@@ -697,3 +697,164 @@ POSITION: 199
 [2026-01-19 16:36:27.383]    ✅ Ponto 09a185ec-6e50-438b-91f1-8ee5c0825790 sincronizado com NEON
 [2026-01-19 16:36:27.388]    📊 Biometrias não sincronizadas: 0
 [2026-01-19 16:36:27.389] ✅ [SYNC] Sincronização com NEON concluída
+[2026-01-19 16:58:30.425] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 16:58:31.998]    ✅ Conexão estabelecida
+[2026-01-19 16:58:31.998]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 16:58:32.251]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 16:58:32.252]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 16:58:32.254]    ✅ Total: 2 setores encontrados
+[2026-01-19 16:59:00.919] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 16:59:01.014]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 16:59:01.032]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 16:59:10.390] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 16:59:10.484]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 16:59:10.497]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 16:59:52.683] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 16:59:54.586]    ✅ Conexão estabelecida
+[2026-01-19 16:59:54.586]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 16:59:54.926]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 16:59:54.926]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 16:59:54.928]    ✅ Total: 2 setores encontrados
+[2026-01-19 17:00:40.913] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:00:42.266]    ✅ Conexão estabelecida
+[2026-01-19 17:00:42.267]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 17:00:42.496]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 17:00:42.497]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 17:00:42.498]    🏢 Setor #3: ID=7, Nome=NEONATOLOGIA
+[2026-01-19 17:00:42.498]    🏢 Setor #4: ID=9, Nome=OBSERVAÇÃO
+[2026-01-19 17:00:42.499]    🏢 Setor #5: ID=5, Nome=UTI
+[2026-01-19 17:00:42.500]    ✅ Total: 5 setores encontrados
+[2026-01-19 17:01:03.399] 🔍 OnFingerprintCaptured - Iniciando verificação LOCAL
+[2026-01-19 17:01:03.400] 📡 Buscando biometrias do SQLite local...
+[2026-01-19 17:01:03.433] ✅ Biometrias retornadas: 5
+[2026-01-19 17:01:03.433] 🔍 Verificando template capturado contra 5 biometrias...
+[2026-01-19 17:01:03.433]    Testando biometria 1: Antônio Ivan Gondim Ferreira da Silva (1632 bytes)
+[2026-01-19 17:01:03.452]    Testando biometria 2: Agatha Allana Laura dos Santos (1632 bytes)
+[2026-01-19 17:01:03.454]    Testando biometria 3: Antônio Ivan Gondim Ferreira da Silva (1632 bytes)
+[2026-01-19 17:01:03.456]    Testando biometria 4: Agatha Allana Laura dos Santos (1632 bytes)
+[2026-01-19 17:01:03.458]    Testando biometria 5: Gabriel Gomes da Silva Lima (1632 bytes)
+[2026-01-19 17:01:03.461]    ✅ MATCH! Cooperado: Gabriel Gomes da Silva Lima
+[2026-01-19 17:01:03.461] ✅ Digital identificada: Gabriel Gomes da Silva Lima
+[2026-01-19 17:01:03.473]    Tipo de registro: Saída
+[2026-01-19 17:01:03.501]    ✅ Ponto registrado localmente com sucesso!
+[2026-01-19 17:01:03.525]    ℹ️ Disparando sincronização em background...
+[2026-01-19 17:01:03.525]    ℹ️ Sincronização disparada (método async)
+[2026-01-19 17:01:03.638] 🔄 [SYNC] Iniciando sincronização com NEON em background...
+[2026-01-19 17:01:03.648]    📊 Pontos não sincronizados: 1
+[2026-01-19 17:01:03.649]    📤 Sincronizando ponto: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:01:03.653] 📤 Iniciando registro de ponto no NEON: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:01:03.654]    SQL Insert ponto id=af9f89dc-9bdf-4cca-9f10-11b9fd85f6e5, codigo=0ebdf58c-d0e2-449d-9e60-a6144d47ac66, coop=af95c39d-88ba-4b1f-84e6-480eb5cd922e, tipo=SAIDA, hosp=852535fa-d14b-43f7-a118-5096ef7ab867, setor=1
+[2026-01-19 17:01:03.705]    ❌ ERRO ao registrar ponto: Exception while writing to stream
+[2026-01-19 17:01:03.705]       Type: NpgsqlException
+[2026-01-19 17:01:03.709]       Full Exception: Npgsql.NpgsqlException (0x80004005): Exception while writing to stream
+ ---> System.IO.IOException: Unable to write data to the transport connection: Foi forçado o cancelamento de uma conexão existente pelo host remoto..
+ ---> System.Net.Sockets.SocketException (10054): Foi forçado o cancelamento de uma conexão existente pelo host remoto.
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.CreateException(SocketError error, Boolean forAsyncThrow)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.SendAsyncForNetworkStream(Socket socket, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.SendAsyncForNetworkStream(ReadOnlyMemory`1 buffer, SocketFlags socketFlags, CancellationToken cancellationToken)
+   at System.Net.Sockets.NetworkStream.WriteAsync(ReadOnlyMemory`1 buffer, CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.WriteSingleChunk[TIOAdapter](ReadOnlyMemory`1 buffer, CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.WriteAsyncInternal[TIOAdapter](ReadOnlyMemory`1 buffer, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at System.Net.Security.SslStream.WriteAsyncInternal[TIOAdapter](ReadOnlyMemory`1 buffer, CancellationToken cancellationToken)
+   at System.Net.Security.SslStream.WriteAsync(Byte[] buffer, Int32 offset, Int32 count, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlWriteBuffer.Flush(Boolean async, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Npgsql.Internal.NpgsqlWriteBuffer.Flush(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Flush(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.<Write>g__WriteExecute|100_0(NpgsqlConnector connector, Boolean async, Boolean flush, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Npgsql.NpgsqlCommand.<Write>g__WriteExecute|100_0(NpgsqlConnector connector, Boolean async, Boolean flush, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.Write(NpgsqlConnector connector, Boolean async, Boolean flush, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Npgsql.NpgsqlCommand.ExecuteNonQueryAsync(CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.RegistrarPontoAsync(RegistroPonto ponto) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 286
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at BiometricSystem.Database.NeonCooperadoHelper.RegistrarPontoAsync(RegistroPonto ponto)
+   at BiometricSystem.Forms.LoginForm.SincronizarComNeonAsync() in C:\Users\PcGabriel\Downloads\Sistema Desktop\Forms\LoginForm.cs:line 567
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.ExecutionContextCallback(Object s)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.MoveNext(Thread threadPoolThread)
+   at System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1.AsyncStateMachineBox`1.MoveNext()
+   at System.Threading.Tasks.AwaitTaskContinuation.RunOrScheduleAction(IAsyncStateMachineBox box, Boolean allowInlining)
+   at System.Threading.Tasks.Task.RunContinuations(Object continuationObject)
+   at System.Threading.Tasks.Task.TrySetResult()
+   at System.Threading.Tasks.Task.DelayPromise.CompleteTimedOut()
+   at System.Threading.TimerQueueTimer.Fire(Boolean isThreadPool)
+   at System.Threading.TimerQueue.FireNextTimers()
+   at System.Threading.ThreadPoolWorkQueue.Dispatch()
+   at System.Threading.PortableThreadPool.WorkerThread.WorkerThreadStart()
+--- End of stack trace from previous location ---
+
+   --- End of inner exception stack trace ---
+   at System.Net.Security.SslStream.<WriteSingleChunk>g__CompleteWriteAsync|157_1[TIOAdapter](ValueTask writeTask, Byte[] bufferToReturn)
+   at System.Net.Security.SslStream.WriteAsyncInternal[TIOAdapter](ReadOnlyMemory`1 buffer, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlWriteBuffer.Flush(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlWriteBuffer.Flush(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.<Write>g__WriteExecute|100_0(NpgsqlConnector connector, Boolean async, Boolean flush, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.RegistrarPontoAsync(RegistroPonto ponto) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 286
+[2026-01-19 17:01:03.710]       Inner: Unable to write data to the transport connection: Foi forçado o cancelamento de uma conexão existente pelo host remoto..
+[2026-01-19 17:01:03.710]    ⚠️ Falha ao sincronizar ponto af9f89dc-9bdf-4cca-9f10-11b9fd85f6e5
+[2026-01-19 17:01:03.714]    📊 Biometrias não sincronizadas: 0
+[2026-01-19 17:01:03.715] ✅ [SYNC] Sincronização com NEON concluída
+[2026-01-19 17:01:08.729] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:01:08.829]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:01:08.843]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
