@@ -73,6 +73,17 @@ namespace BiometricSystem.Database
                     Timestamp TEXT NOT NULL,
                     Tipo TEXT NOT NULL,
                     Local TEXT,
+                    HospitalId TEXT,
+                    SetorId INTEGER,
+                    Status TEXT,
+                    IsManual INTEGER NOT NULL DEFAULT 0,
+                    RelatedId TEXT,
+                    Date TEXT,
+                    Entrada TEXT,
+                    Saida TEXT,
+                    Observacao TEXT,
+                    BiometriaEntradaHash TEXT,
+                    BiometriaSaidaHash TEXT,
                     SyncedToNeon INTEGER NOT NULL DEFAULT 0,
                     LastSyncTime TEXT
                 )";
@@ -89,6 +100,19 @@ namespace BiometricSystem.Database
 
             using (var cmd = new SQLiteCommand(createPontosTable, connection))
                 cmd.ExecuteNonQuery();
+
+            // Ajustar esquema legado para suportar hospital/setor e status (idempotente)
+            EnsureColumnExists(connection, "Pontos", "HospitalId", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "SetorId", "INTEGER");
+            EnsureColumnExists(connection, "Pontos", "Status", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "IsManual", "INTEGER NOT NULL DEFAULT 0");
+            EnsureColumnExists(connection, "Pontos", "RelatedId", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "Date", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "Entrada", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "Saida", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "Observacao", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "BiometriaEntradaHash", "TEXT");
+            EnsureColumnExists(connection, "Pontos", "BiometriaSaidaHash", "TEXT");
 
             // Criar índices para melhor performance
             CreateIndexIfNotExists(connection, "idx_employees_cpf", "Employees", "CPF");
@@ -141,6 +165,37 @@ namespace BiometricSystem.Database
             catch
             {
                 return false;
+            }
+        }
+
+        private void EnsureColumnExists(SQLiteConnection connection, string tableName, string columnName, string columnDefinition)
+        {
+            try
+            {
+                string checkQuery = $"PRAGMA table_info({tableName})";
+                using var checkCmd = new SQLiteCommand(checkQuery, connection);
+                using var reader = checkCmd.ExecuteReader();
+
+                bool exists = false;
+                while (reader.Read())
+                {
+                    if (reader[1].ToString()?.Equals(columnName, StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    string alter = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition}";
+                    using var alterCmd = new SQLiteCommand(alter, connection);
+                    alterCmd.ExecuteNonQuery();
+                }
+            }
+            catch
+            {
+                // Silenciar para ambientes com SQLite antigo; não é crítico se já existir
             }
         }
 
@@ -459,7 +514,13 @@ namespace BiometricSystem.Database
 
         // ==================== MÉTODOS PARA PONTOS ====================
 
-        public bool SalvarPontoLocal(string cooperadoId, string cooperadoNome, string tipo, string local)
+        public bool SalvarPontoLocal(
+            string cooperadoId,
+            string cooperadoNome,
+            string tipo,
+            string local,
+            string? hospitalId,
+            int? setorId)
         {
             try
             {
@@ -467,18 +528,60 @@ namespace BiometricSystem.Database
                 connection.Open();
 
                 string id = Guid.NewGuid().ToString();
-                string codigo = Guid.NewGuid().ToString();
-                string query = @"INSERT INTO Pontos (Id, Codigo, CooperadoId, CooperadoNome, Timestamp, Tipo, Local, SyncedToNeon) 
-                                VALUES (@Id, @Codigo, @CooperadoId, @CooperadoNome, @Timestamp, @Tipo, @Local, 0)";
+                string? relatedId = null;
+
+                // Normalizar tipo (web espera ENTRADA/SAIDA em maiúsculas)
+                string tipoNormalizado = tipo.Equals("Saída", StringComparison.OrdinalIgnoreCase) ? "SAIDA" : tipo.Equals("Entrada", StringComparison.OrdinalIgnoreCase) ? "ENTRADA" : tipo.ToUpperInvariant();
+
+                // Reutilizar código e vincular saída à última entrada
+                var entradaAnterior = ObterUltimaEntrada(cooperadoId);
+                string codigo;
+                if (tipoNormalizado == "SAIDA" && entradaAnterior != null)
+                {
+                    codigo = entradaAnterior.Value.Codigo;
+                    relatedId = entradaAnterior.Value.Id;
+                }
+                else
+                {
+                    codigo = Guid.NewGuid().ToString();
+                }
+
+                var agora = DateTime.Now;
+                string timestampIso = agora.ToString("yyyy-MM-ddTHH:mm:sszzz");
+                string data = agora.ToString("yyyy-MM-dd");
+                string hora = agora.ToString("HH:mm");
+                string? entrada = tipoNormalizado == "ENTRADA" ? hora : null;
+                string? saida = tipoNormalizado == "SAIDA" ? hora : null;
+                string status = tipoNormalizado == "ENTRADA" ? "Aberto" : "Fechado";
+
+                string query = @"INSERT INTO Pontos (
+                                    Id, Codigo, CooperadoId, CooperadoNome, Timestamp, Tipo, Local,
+                                    HospitalId, SetorId, Status, IsManual, RelatedId, Date, Entrada, Saida,
+                                    Observacao, BiometriaEntradaHash, BiometriaSaidaHash, SyncedToNeon)
+                                VALUES (
+                                    @Id, @Codigo, @CooperadoId, @CooperadoNome, @Timestamp, @Tipo, @Local,
+                                    @HospitalId, @SetorId, @Status, @IsManual, @RelatedId, @Date, @Entrada, @Saida,
+                                    @Observacao, @BiometriaEntradaHash, @BiometriaSaidaHash, 0)";
 
                 using var cmd = new SQLiteCommand(query, connection);
                 cmd.Parameters.AddWithValue("@Id", id);
                 cmd.Parameters.AddWithValue("@Codigo", codigo);
                 cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
                 cmd.Parameters.AddWithValue("@CooperadoNome", cooperadoNome);
-                cmd.Parameters.AddWithValue("@Timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-                cmd.Parameters.AddWithValue("@Tipo", tipo);
+                cmd.Parameters.AddWithValue("@Timestamp", timestampIso);
+                cmd.Parameters.AddWithValue("@Tipo", tipoNormalizado);
                 cmd.Parameters.AddWithValue("@Local", local ?? "");
+                cmd.Parameters.AddWithValue("@HospitalId", hospitalId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@SetorId", setorId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Status", status);
+                cmd.Parameters.AddWithValue("@IsManual", 0); // ponto biométrico
+                cmd.Parameters.AddWithValue("@RelatedId", relatedId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Date", data);
+                cmd.Parameters.AddWithValue("@Entrada", entrada ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Saida", saida ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Observacao", (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@BiometriaEntradaHash", (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@BiometriaSaidaHash", (object)DBNull.Value);
 
                 return cmd.ExecuteNonQuery() > 0;
             }
@@ -509,6 +612,36 @@ namespace BiometricSystem.Database
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Erro ao buscar último ponto: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private (string Id, string Codigo)? ObterUltimaEntrada(string cooperadoId)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                string query = @"SELECT Id, Codigo
+                                FROM Pontos
+                                WHERE CooperadoId = @CooperadoId AND Tipo = 'ENTRADA'
+                                ORDER BY datetime(Timestamp) DESC
+                                LIMIT 1";
+
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                using var reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    return (reader.GetString(0), reader.GetString(1));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao buscar última entrada: {ex.Message}");
             }
 
             return null;
@@ -574,27 +707,67 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Busca pontos que ainda não foram sincronizados com NEON
         /// </summary>
-        public List<(string Id, string CooperadoId, string CooperadoNome, string Tipo, string Local)> BuscarPontosNaoSincronizados()
+        public class PontoLocal
         {
-            var pontos = new List<(string Id, string CooperadoId, string CooperadoNome, string Tipo, string Local)>();
+            public string Id { get; set; } = string.Empty;
+            public string Codigo { get; set; } = string.Empty;
+            public string CooperadoId { get; set; } = string.Empty;
+            public string CooperadoNome { get; set; } = string.Empty;
+            public string Tipo { get; set; } = string.Empty;
+            public string Local { get; set; } = string.Empty;
+            public string? HospitalId { get; set; }
+            public int? SetorId { get; set; }
+            public string? Status { get; set; }
+            public bool IsManual { get; set; }
+            public string? RelatedId { get; set; }
+            public string? Date { get; set; }
+            public string? Entrada { get; set; }
+            public string? Saida { get; set; }
+            public string? Observacao { get; set; }
+            public string? BiometriaEntradaHash { get; set; }
+            public string? BiometriaSaidaHash { get; set; }
+            public DateTime Timestamp { get; set; }
+        }
+
+        public List<PontoLocal> BuscarPontosNaoSincronizados()
+        {
+            var pontos = new List<PontoLocal>();
             try
             {
                 using var connection = new SQLiteConnection(connectionString);
                 connection.Open();
 
-                string query = "SELECT Id, CooperadoId, CooperadoNome, Tipo, Local FROM Pontos WHERE SyncedToNeon = 0 LIMIT 500";
+                string query = @"SELECT Id, Codigo, CooperadoId, CooperadoNome, Tipo, Local, HospitalId, SetorId, Status, IsManual,
+                                        RelatedId, Date, Entrada, Saida, Observacao, BiometriaEntradaHash, BiometriaSaidaHash, Timestamp
+                                FROM Pontos WHERE SyncedToNeon = 0 LIMIT 500";
                 using var cmd = new SQLiteCommand(query, connection);
                 using var reader = cmd.ExecuteReader();
 
                 while (reader.Read())
                 {
-                    string id = reader.GetString(0);
-                    string cooperadoId = reader.GetString(1);
-                    string cooperadoNome = reader.GetString(2);
-                    string tipo = reader.GetString(3);
-                    string local = reader.GetString(4);
+                    var ponto = new PontoLocal
+                    {
+                        Id = reader.GetString(0),
+                        Codigo = reader.GetString(1),
+                        CooperadoId = reader.GetString(2),
+                        CooperadoNome = reader.GetString(3),
+                        Tipo = reader.GetString(4),
+                        Local = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                        HospitalId = reader.IsDBNull(6) ? null : reader.GetString(6),
+                        SetorId = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                        Status = reader.IsDBNull(8) ? null : reader.GetString(8),
+                        IsManual = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
+                        RelatedId = reader.IsDBNull(10) ? null : reader.GetString(10),
+                        Date = reader.IsDBNull(11) ? null : reader.GetString(11),
+                        Entrada = reader.IsDBNull(12) ? null : reader.GetString(12),
+                        Saida = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        Observacao = reader.IsDBNull(14) ? null : reader.GetString(14),
+                        BiometriaEntradaHash = reader.IsDBNull(15) ? null : reader.GetString(15),
+                        BiometriaSaidaHash = reader.IsDBNull(16) ? null : reader.GetString(16),
+                        Timestamp = DateTime.TryParse(reader.GetString(17), out var ts) ? ts : DateTime.Now
+                    };
 
-                    pontos.Add((id, cooperadoId, cooperadoNome, tipo, local));
+                    pontos.Add(ponto);
                 }
             }
             catch (Exception ex)

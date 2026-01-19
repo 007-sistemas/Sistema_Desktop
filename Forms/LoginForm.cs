@@ -366,7 +366,9 @@ namespace BiometricSystem.Forms
                         matchedCooperadoId,
                         matchedCooperadoNome,
                         tipoRegistro,
-                        localFormatado
+                        localFormatado,
+                        hospitalId,
+                        selectedSetorId
                     );
 
                     if (sucessoLocal)
@@ -540,14 +542,29 @@ namespace BiometricSystem.Forms
                     {
                         LogToFile($"   📤 Sincronizando ponto: {ponto.CooperadoNome} - {ponto.Tipo}");
                         
-                        bool sucesso = await neonHelper.RegistrarPontoAsync(
-                            ponto.CooperadoId,
-                            ponto.CooperadoNome,
-                            ponto.Tipo,
-                            ponto.Local,
-                            hospitalId,
-                            selectedSetorId
-                        );
+                        var registro = new RegistroPonto
+                        {
+                            Id = ponto.Id,
+                            Codigo = ponto.Codigo,
+                            CooperadoId = ponto.CooperadoId,
+                            CooperadoNome = ponto.CooperadoNome,
+                            Timestamp = ponto.Timestamp,
+                            Tipo = ponto.Tipo,
+                            Local = ponto.Local,
+                            HospitalId = ponto.HospitalId,
+                            SetorId = ponto.SetorId?.ToString(),
+                            Status = ponto.Status ?? "Aberto",
+                            IsManual = ponto.IsManual,
+                            RelatedId = ponto.RelatedId,
+                            Date = ponto.Date,
+                            Entrada = ponto.Entrada,
+                            Saida = ponto.Saida,
+                            Observacao = ponto.Observacao,
+                            BiometriaEntradaHash = ponto.BiometriaEntradaHash,
+                            BiometriaSaidaHash = ponto.BiometriaSaidaHash
+                        };
+
+                        bool sucesso = await neonHelper.RegistrarPontoAsync(registro);
 
                         if (sucesso)
                         {

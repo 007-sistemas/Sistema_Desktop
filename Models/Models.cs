@@ -37,6 +37,9 @@ namespace BiometricSystem.Models
         public string? Local { get; set; } // Hospital + Setor
         public string? HospitalId { get; set; }
         public string? SetorId { get; set; }
+        public string? Date { get; set; }
+        public string? Entrada { get; set; }
+        public string? Saida { get; set; }
         public string? Observacao { get; set; }
         public string? RelatedId { get; set; } // ID do ponto vinculado (entrada → saída)
         public string Status { get; set; } = "Pendente"; // Aberto, Fechado, Pendente, Rejeitado

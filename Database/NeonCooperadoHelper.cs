@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using BiometricSystem.Models;
 
 namespace BiometricSystem.Database
 {
@@ -224,42 +225,68 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Registra um ponto (entrada/saída) na tabela 'pontos' do NEON
         /// </summary>
-        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local, string? hospitalId = null, int? setorId = null)
+        public async Task<bool> RegistrarPontoAsync(RegistroPonto ponto)
         {
             NpgsqlConnection? connection = null;
 
             try
             {
-                Log($"📤 Iniciando registro de ponto no NEON: {cooperadoNome} - {tipo}");
+                Log($"📤 Iniciando registro de ponto no NEON: {ponto.CooperadoNome} - {ponto.Tipo}");
                 
                 connection = new NpgsqlConnection(_pooledConnectionString);
                 await connection.OpenAsync();
 
-                // Gerar IDs únicos para o registro
-                string id = Guid.NewGuid().ToString();
-                string codigo = Guid.NewGuid().ToString();
-
-                // Query incluindo hospital_id e setor_id para compatibilidade com sistema web
+                // Query compatível com o backend web (ordem e campos usados lá)
                 string query = @"
-                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local, hospital_id, setor_id)
-                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local, @hospital_id, @setor_id)";
+                    INSERT INTO pontos (
+                        id, codigo, cooperado_id, cooperado_nome, date, tipo, entrada, saida,
+                        hospital_id, setor_id, biometria_entrada_hash, biometria_saida_hash, timestamp,
+                        related_id, status, is_manual, local, validado_por, rejeitado_por, motivo_rejeicao, observacao
+                    ) VALUES (
+                        @id, @codigo, @cooperado_id, @cooperado_nome, @date, @tipo, @entrada, @saida,
+                        @hospital_id, @setor_id, @biometria_entrada_hash, @biometria_saida_hash, @timestamp,
+                        @related_id, @status, @is_manual, @local, @validado_por, @rejeitado_por, @motivo_rejeicao, @observacao
+                    )";
 
-                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo}, hospital_id={hospitalId}, setor_id={setorId})");
+                Log($"   SQL Insert ponto id={ponto.Id}, codigo={ponto.Codigo}, coop={ponto.CooperadoId}, tipo={ponto.Tipo}, hosp={ponto.HospitalId}, setor={ponto.SetorId}");
                 
                 using var cmd = new NpgsqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@id", id);
-                cmd.Parameters.AddWithValue("@codigo", codigo);
-                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
-                cmd.Parameters.AddWithValue("@cooperado_nome", cooperadoNome);
-                cmd.Parameters.AddWithValue("@tipo", tipo);
-                cmd.Parameters.AddWithValue("@local", local ?? "");
-                cmd.Parameters.AddWithValue("@hospital_id", (object?)hospitalId ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@setor_id", (object?)setorId ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@id", ponto.Id);
+                cmd.Parameters.AddWithValue("@codigo", ponto.Codigo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@cooperado_id", ponto.CooperadoId);
+                cmd.Parameters.AddWithValue("@cooperado_nome", ponto.CooperadoNome);
+                cmd.Parameters.AddWithValue("@date", ponto.Timestamp.ToString("yyyy-MM-dd"));
+                cmd.Parameters.AddWithValue("@tipo", ponto.Tipo);
+                cmd.Parameters.AddWithValue("@entrada", ponto.Entrada ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@saida", ponto.Saida ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@hospital_id", (object?)ponto.HospitalId ?? DBNull.Value);
+
+                // Setor pode ser string ou número; o web aceita texto. Tentar converter para int se vier como número.
+                object setorParam;
+                if (int.TryParse(ponto.SetorId ?? string.Empty, out var setorInt))
+                    setorParam = setorInt;
+                else if (ponto.SetorId != null)
+                    setorParam = ponto.SetorId;
+                else
+                    setorParam = DBNull.Value;
+                cmd.Parameters.AddWithValue("@setor_id", setorParam);
+
+                cmd.Parameters.AddWithValue("@biometria_entrada_hash", ponto.BiometriaEntradaHash ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@biometria_saida_hash", ponto.BiometriaSaidaHash ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@timestamp", ponto.Timestamp.ToString("O"));
+                cmd.Parameters.AddWithValue("@related_id", ponto.RelatedId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@status", ponto.Status ?? "Aberto");
+                cmd.Parameters.AddWithValue("@is_manual", ponto.IsManual);
+                cmd.Parameters.AddWithValue("@local", ponto.Local ?? "");
+                cmd.Parameters.AddWithValue("@validado_por", ponto.ValidadoPor ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@rejeitado_por", ponto.RejeitadoPor ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@motivo_rejeicao", ponto.MotivoRejeicao ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@observacao", ponto.Observacao ?? (object)DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 Log($"   ✅ Ponto registrado no NEON (rows affected: {rowsAffected})");
                 
-                Debug.WriteLine($"✅ Ponto registrado no NEON. Tipo: {tipo}, Cooperado: {cooperadoNome}");
+                Debug.WriteLine($"✅ Ponto registrado no NEON. Tipo: {ponto.Tipo}, Cooperado: {ponto.CooperadoNome}");
 
                 return rowsAffected > 0;
             }
