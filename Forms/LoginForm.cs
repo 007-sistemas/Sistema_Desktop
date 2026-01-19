@@ -3,6 +3,7 @@ using BiometricSystem.Models;
 using BiometricSystem.Services;
 using System.Globalization;
 using System.Drawing.Drawing2D;
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 
 namespace BiometricSystem.Forms
@@ -165,7 +166,47 @@ namespace BiometricSystem.Forms
             try
             {
                 lblStatus.Text = "⏳ Carregando setores...";
-                var setores = await neonHelper.GetSetoresDoHospitalAsync(hospitalId);
+                
+                List<NeonCooperadoHelper.SetorInfo> setores = new List<NeonCooperadoHelper.SetorInfo>();
+                bool carregadoDoNeon = false;
+
+                // Tentar carregar do Neon (se houver conexão)
+                try
+                {
+                    setores = await neonHelper.GetSetoresDoHospitalAsync(hospitalId, database);
+                    carregadoDoNeon = true;
+                    lblStatus.Text = "✅ Setores carregados online.";
+                }
+                catch (Exception exNeon)
+                {
+                    // Sem conexão ou erro - tentar usar cache local
+                    Debug.WriteLine($"⚠️ Não foi possível carregar do Neon: {exNeon.Message}");
+                    
+                    var setoresLocais = database.BuscarSetoresLocal(hospitalId);
+                    if (setoresLocais.Any())
+                    {
+                        // Converter para SetorInfo
+                        setores = setoresLocais.Select(s => new NeonCooperadoHelper.SetorInfo
+                        {
+                            Id = s.Id,
+                            Nome = s.Nome
+                        }).ToList();
+                        
+                        lblStatus.Text = "📂 Setores carregados do cache local (offline).";
+                    }
+                    else
+                    {
+                        lblStatus.Text = "❌ Sem conexão e sem cache local de setores.";
+                        MessageBox.Show(
+                            "Não foi possível carregar os setores.\n\n" +
+                            "É necessário conexão com a internet na primeira vez para baixar os setores.\n" +
+                            "Após isso, você poderá trabalhar offline.",
+                            "Sem Setores",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
                 
                 if (setores.Any())
                 {
@@ -174,7 +215,6 @@ namespace BiometricSystem.Forms
                     cmbSetor.DisplayMember = "Nome";
                     cmbSetor.ValueMember = "Id";
                     cmbSetor.SelectedIndex = -1;
-                    lblStatus.Text = "✅ Setores carregados. Selecione o setor.";
                 }
                 else
                 {

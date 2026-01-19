@@ -88,6 +88,15 @@ namespace BiometricSystem.Database
                     LastSyncTime TEXT
                 )";
 
+            // Tabela de Setores (cache local para uso offline)
+            string createSetoresTable = @"
+                CREATE TABLE IF NOT EXISTS Setores (
+                    Id INTEGER PRIMARY KEY,
+                    Nome TEXT NOT NULL,
+                    HospitalId TEXT NOT NULL,
+                    LastSyncTime TEXT NOT NULL
+                )";
+
             // Criar tabelas
             using (var cmd = new SQLiteCommand(createEmployeesTable, connection))
                 cmd.ExecuteNonQuery();
@@ -99,6 +108,9 @@ namespace BiometricSystem.Database
                 cmd.ExecuteNonQuery();
 
             using (var cmd = new SQLiteCommand(createPontosTable, connection))
+                cmd.ExecuteNonQuery();
+
+            using (var cmd = new SQLiteCommand(createSetoresTable, connection))
                 cmd.ExecuteNonQuery();
 
             // Ajustar esquema legado para suportar hospital/setor e status (idempotente)
@@ -128,6 +140,9 @@ namespace BiometricSystem.Database
             CreateIndexIfNotExists(connection, "idx_pontos_cooperado", "Pontos", "CooperadoId");
             CreateIndexIfNotExists(connection, "idx_pontos_timestamp", "Pontos", "Timestamp");
             CreateIndexIfNotExists(connection, "idx_pontos_synced", "Pontos", "SyncedToNeon");
+            
+            // Índices para setores
+            CreateIndexIfNotExists(connection, "idx_setores_hospital", "Setores", "HospitalId");
         }
 
         private void CreateIndexIfNotExists(SQLiteConnection connection, string indexName, string tableName, string columnName)
@@ -801,5 +816,110 @@ namespace BiometricSystem.Database
                 return false;
             }
         }
+
+        #region Setores Cache
+
+        /// <summary>
+        /// Salva/atualiza setores de um hospital no cache local
+        /// </summary>
+        public void SalvarSetoresLocal(string hospitalId, List<(int Id, string Nome)> setores)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                // Limpar setores antigos deste hospital
+                string deleteQuery = "DELETE FROM Setores WHERE HospitalId = @HospitalId";
+                using (var deleteCmd = new SQLiteCommand(deleteQuery, connection))
+                {
+                    deleteCmd.Parameters.AddWithValue("@HospitalId", hospitalId);
+                    deleteCmd.ExecuteNonQuery();
+                }
+
+                // Inserir novos setores
+                string insertQuery = @"
+                    INSERT INTO Setores (Id, Nome, HospitalId, LastSyncTime)
+                    VALUES (@Id, @Nome, @HospitalId, @LastSyncTime)";
+
+                string syncTime = DateTime.UtcNow.ToString("O");
+
+                foreach (var setor in setores)
+                {
+                    using var insertCmd = new SQLiteCommand(insertQuery, connection);
+                    insertCmd.Parameters.AddWithValue("@Id", setor.Id);
+                    insertCmd.Parameters.AddWithValue("@Nome", setor.Nome);
+                    insertCmd.Parameters.AddWithValue("@HospitalId", hospitalId);
+                    insertCmd.Parameters.AddWithValue("@LastSyncTime", syncTime);
+                    insertCmd.ExecuteNonQuery();
+                }
+
+                System.Diagnostics.Debug.WriteLine($"✅ {setores.Count} setores salvos localmente para hospital {hospitalId}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Erro ao salvar setores localmente: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Busca setores de um hospital do cache local
+        /// </summary>
+        public List<(int Id, string Nome)> BuscarSetoresLocal(string hospitalId)
+        {
+            var setores = new List<(int Id, string Nome)>();
+
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                string query = "SELECT Id, Nome FROM Setores WHERE HospitalId = @HospitalId ORDER BY Nome";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@HospitalId", hospitalId);
+
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    setores.Add((
+                        Id: reader.GetInt32(0),
+                        Nome: reader.GetString(1)
+                    ));
+                }
+
+                System.Diagnostics.Debug.WriteLine($"📂 {setores.Count} setores carregados do cache local");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Erro ao buscar setores locais: {ex.Message}");
+            }
+
+            return setores;
+        }
+
+        /// <summary>
+        /// Verifica se existem setores no cache local para um hospital
+        /// </summary>
+        public bool TemSetoresLocal(string hospitalId)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                string query = "SELECT COUNT(*) FROM Setores WHERE HospitalId = @HospitalId";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@HospitalId", hospitalId);
+
+                long count = (long)cmd.ExecuteScalar();
+                return count > 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

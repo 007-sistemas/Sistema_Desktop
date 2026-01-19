@@ -758,8 +758,9 @@ namespace BiometricSystem.Database
 
         /// <summary>
         /// Busca os setores de um hospital específico com ID e nome
+        /// Salva no cache local para uso offline
         /// </summary>
-        public async Task<List<SetorInfo>> GetSetoresDoHospitalAsync(string hospitalId)
+        public async Task<List<SetorInfo>> GetSetoresDoHospitalAsync(string hospitalId, DatabaseHelper? localDb = null)
         {
             var setores = new List<SetorInfo>();
             NpgsqlConnection? connection = null;
@@ -798,6 +799,14 @@ namespace BiometricSystem.Database
                 }
 
                 Log($"   ✅ Total: {setores.Count} setores encontrados");
+
+                // Salvar no cache local se DatabaseHelper foi fornecido
+                if (localDb != null && setores.Any())
+                {
+                    var setoresParaSalvar = setores.Select(s => (s.Id, s.Nome)).ToList();
+                    localDb.SalvarSetoresLocal(hospitalId, setoresParaSalvar);
+                    Log($"   💾 Setores salvos no cache local");
+                }
             }
             catch (Exception ex)
             {
