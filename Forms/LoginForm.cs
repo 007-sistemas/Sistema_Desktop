@@ -522,7 +522,8 @@ namespace BiometricSystem.Forms
                             ponto.CooperadoId,
                             ponto.CooperadoNome,
                             ponto.Tipo,
-                            ponto.Local
+                            ponto.Local,
+                            hospitalId
                         );
 
                         if (sucesso)

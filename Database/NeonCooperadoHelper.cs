@@ -224,9 +224,9 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Registra um ponto (entrada/saída) na tabela 'pontos' do NEON
         /// </summary>
-        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local)
+        public async Task<bool> RegistrarPontoAsync(string cooperadoId, string cooperadoNome, string tipo, string local, string? hospitalId = null)
         {
-            NpgsqlConnection connection = null;
+            NpgsqlConnection? connection = null;
 
             try
             {
@@ -239,12 +239,12 @@ namespace BiometricSystem.Database
                 string id = Guid.NewGuid().ToString();
                 string codigo = Guid.NewGuid().ToString();
 
-                // Query com ID fornecido pelo cliente
+                // Query incluindo hospital_id para compatibilidade com sistema web
                 string query = @"
-                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local)
-                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local)";
+                    INSERT INTO pontos (id, codigo, cooperado_id, cooperado_nome, timestamp, tipo, local, hospital_id)
+                    VALUES (@id, @codigo, @cooperado_id, @cooperado_nome, NOW(), @tipo, @local, @hospital_id)";
 
-                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo})");
+                Log($"   SQL Query: INSERT INTO pontos (id={id.Substring(0, 8)}..., codigo={codigo.Substring(0, 8)}..., cooperado_id={cooperadoId}, tipo={tipo}, hospital_id={hospitalId})");
                 
                 using var cmd = new NpgsqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@id", id);
@@ -253,6 +253,7 @@ namespace BiometricSystem.Database
                 cmd.Parameters.AddWithValue("@cooperado_nome", cooperadoNome);
                 cmd.Parameters.AddWithValue("@tipo", tipo);
                 cmd.Parameters.AddWithValue("@local", local ?? "");
+                cmd.Parameters.AddWithValue("@hospital_id", (object?)hospitalId ?? DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 Log($"   ✅ Ponto registrado no NEON (rows affected: {rowsAffected})");
@@ -670,8 +671,9 @@ namespace BiometricSystem.Database
                 await connection.OpenAsync();
                 Log("   ✅ Conexão com NEON estabelecida");
 
-                // Buscar da tabela correta: hospitals
-                string query = "SELECT id, hospital, setor FROM hospitals ORDER BY hospital LIMIT 20";
+                // Tabela hospitals: colunas reais (id, nome, slug, usuario_acesso, ...)
+                // Usar nome como display e slug como código
+                string query = "SELECT id, nome, slug FROM hospitals ORDER BY nome LIMIT 100";
                 Log($"   📝 Query SQL: {query}");
                     
                 using var cmd = new NpgsqlCommand(query, connection);
@@ -685,9 +687,9 @@ namespace BiometricSystem.Database
                     count++;
                     var hospital = new Hospital
                     {
-                        Id = reader.GetString(0),
-                        Nome = reader.GetString(1),
-                        Codigo = reader.IsDBNull(2) ? "" : reader.GetString(2)
+                        Id = reader.GetString(0),           // id (text)
+                        Nome = reader.GetString(1),         // nome (text)
+                        Codigo = reader.IsDBNull(2) ? "" : reader.GetString(2) // slug (text)
                     };
                     hospitais.Add(hospital);
                     Log($"   🏥 Hospital #{count}: ID={hospital.Id}, Nome={hospital.Nome}, Codigo={hospital.Codigo}");
@@ -734,15 +736,15 @@ namespace BiometricSystem.Database
                 Log("   ✅ Conexão estabelecida");
 
                 string query = @"
-                    SELECT DISTINCT s.setor 
+                    SELECT DISTINCT s.nome 
                     FROM hospital_setores hs
                     INNER JOIN setores s ON hs.setor_id = s.id
-                    WHERE hs.hospital_id = @hospital_id::uuid
-                    ORDER BY s.setor";
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome";
                     
                 Log($"   📝 Query SQL: {query}");
                 using var cmd = new NpgsqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@hospital_id", new Guid(hospitalId));
+                cmd.Parameters.AddWithValue("@hospital_id", hospitalId);
                 
                 using var reader = await cmd.ExecuteReaderAsync();
                 int count = 0;
