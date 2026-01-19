@@ -902,3 +902,76 @@ POSITION: 199
    at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
    at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
    at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 17:13:38.497] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:13:39.721]    ✅ Conexão estabelecida
+[2026-01-19 17:13:39.722]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 17:13:39.904]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 17:13:39.904]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 17:13:39.905]    🏢 Setor #3: ID=7, Nome=NEONATOLOGIA
+[2026-01-19 17:13:39.905]    🏢 Setor #4: ID=9, Nome=OBSERVAÇÃO
+[2026-01-19 17:13:39.906]    🏢 Setor #5: ID=5, Nome=UTI
+[2026-01-19 17:13:39.907]    ✅ Total: 5 setores encontrados
+[2026-01-19 17:13:49.684] 🔍 OnFingerprintCaptured - Iniciando verificação LOCAL
+[2026-01-19 17:13:49.684] 📡 Buscando biometrias do SQLite local...
+[2026-01-19 17:13:49.696] ✅ Biometrias retornadas: 5
+[2026-01-19 17:13:49.696] 🔍 Verificando template capturado contra 5 biometrias...
+[2026-01-19 17:13:49.697]    Testando biometria 1: Antônio Ivan Gondim Ferreira da Silva (1632 bytes)
+[2026-01-19 17:13:49.705]    Testando biometria 2: Agatha Allana Laura dos Santos (1632 bytes)
+[2026-01-19 17:13:49.707]    Testando biometria 3: Antônio Ivan Gondim Ferreira da Silva (1632 bytes)
+[2026-01-19 17:13:49.710]    Testando biometria 4: Agatha Allana Laura dos Santos (1632 bytes)
+[2026-01-19 17:13:49.713]    Testando biometria 5: Gabriel Gomes da Silva Lima (1632 bytes)
+[2026-01-19 17:13:49.716]    ✅ MATCH! Cooperado: Gabriel Gomes da Silva Lima
+[2026-01-19 17:13:49.717] ✅ Digital identificada: Gabriel Gomes da Silva Lima
+[2026-01-19 17:13:49.727]    Tipo de registro: Saída
+[2026-01-19 17:13:49.759]    ✅ Ponto registrado localmente com sucesso!
+[2026-01-19 17:13:49.790]    ℹ️ Disparando sincronização em background...
+[2026-01-19 17:13:49.791]    ℹ️ Sincronização disparada (método async)
+[2026-01-19 17:13:49.904] 🔄 [SYNC] Iniciando sincronização com NEON em background...
+[2026-01-19 17:13:49.917]    📊 Pontos não sincronizados: 2
+[2026-01-19 17:13:49.917]    📤 Sincronizando ponto: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:13:49.922] 📤 Iniciando registro de ponto no NEON: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:13:49.923]    SQL Insert ponto id=af9f89dc-9bdf-4cca-9f10-11b9fd85f6e5, codigo=0ebdf58c-d0e2-449d-9e60-a6144d47ac66, coop=af95c39d-88ba-4b1f-84e6-480eb5cd922e, tipo=SAIDA, hosp=852535fa-d14b-43f7-a118-5096ef7ab867, setor=1
+[2026-01-19 17:13:50.036]    ✅ Ponto registrado no NEON (rows affected: 1)
+[2026-01-19 17:13:50.068]    ✅ Ponto af9f89dc-9bdf-4cca-9f10-11b9fd85f6e5 sincronizado com NEON
+[2026-01-19 17:13:50.068]    📤 Sincronizando ponto: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:13:50.069] 📤 Iniciando registro de ponto no NEON: Gabriel Gomes da Silva Lima - SAIDA
+[2026-01-19 17:13:50.069]    SQL Insert ponto id=ece56310-5112-4633-8d25-a210452a4b8c, codigo=0ebdf58c-d0e2-449d-9e60-a6144d47ac66, coop=af95c39d-88ba-4b1f-84e6-480eb5cd922e, tipo=SAIDA, hosp=852535fa-d14b-43f7-a118-5096ef7ab867, setor=3
+[2026-01-19 17:13:50.165]    ✅ Ponto registrado no NEON (rows affected: 1)
+[2026-01-19 17:13:50.185]    ✅ Ponto ece56310-5112-4633-8d25-a210452a4b8c sincronizado com NEON
+[2026-01-19 17:13:50.191]    📊 Biometrias não sincronizadas: 0
+[2026-01-19 17:13:50.192] ✅ [SYNC] Sincronização com NEON concluída
+[2026-01-19 17:14:07.938] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:14:08.038]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:14:08.049]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 17:14:13.914] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:14:14.020]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:14:14.029]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
