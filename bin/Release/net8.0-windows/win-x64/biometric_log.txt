@@ -975,3 +975,76 @@ POSITION: 199
    at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
    at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
    at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 17:21:07.686] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:21:09.139]    ✅ Conexão estabelecida
+[2026-01-19 17:21:09.140]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 17:21:09.413]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 17:21:09.414]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 17:21:09.414]    🏢 Setor #3: ID=7, Nome=NEONATOLOGIA
+[2026-01-19 17:21:09.415]    🏢 Setor #4: ID=9, Nome=OBSERVAÇÃO
+[2026-01-19 17:21:09.415]    🏢 Setor #5: ID=5, Nome=UTI
+[2026-01-19 17:21:09.416]    ✅ Total: 5 setores encontrados
+[2026-01-19 17:21:26.778] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:21:26.918]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:21:26.932]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 17:21:57.822] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:21:57.933]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:21:57.947]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771
+[2026-01-19 17:23:21.555] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:23:23.068]    ✅ Conexão estabelecida
+[2026-01-19 17:23:23.069]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-19 17:23:23.275]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-19 17:23:23.276]    🏢 Setor #2: ID=3, Nome=CME
+[2026-01-19 17:23:23.276]    🏢 Setor #3: ID=7, Nome=NEONATOLOGIA
+[2026-01-19 17:23:23.277]    🏢 Setor #4: ID=9, Nome=OBSERVAÇÃO
+[2026-01-19 17:23:23.277]    🏢 Setor #5: ID=5, Nome=UTI
+[2026-01-19 17:23:23.278]    ✅ Total: 5 setores encontrados
+[2026-01-19 17:23:46.190] 🏢 Buscando setores do hospital 852535fa-d14b-43f7-a118-5096ef7ab867...
+[2026-01-19 17:23:46.305]    ❌ Erro ao buscar setores: Este host não é conhecido.
+[2026-01-19 17:23:46.321]    ❌ Stack trace:    at System.Net.NameResolutionPal.ProcessResult(SocketError errorCode, GetAddrInfoExContext* context)
+   at System.Net.NameResolutionPal.GetAddressInfoExCallback(Int32 error, Int32 bytes, NativeOverlapped* overlapped)
+--- End of stack trace from previous location ---
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync(Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.TaskTimeoutAndCancellation.ExecuteAsync[TResult](Func`2 getTaskFunc, NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at BiometricSystem.Database.NeonCooperadoHelper.GetSetoresDoHospitalAsync(String hospitalId) in C:\Users\PcGabriel\Downloads\Sistema Desktop\Database\NeonCooperadoHelper.cs:line 771

@@ -143,119 +143,98 @@ namespace BiometricSystem.Forms
 
         private async void CarregarSetoresDoHospital()
         {
+            Debug.WriteLine("═══════════════════════════════════════════");
+            Debug.WriteLine("🔄 INICIANDO CARREGAMENTO DE SETORES");
+            Debug.WriteLine("═══════════════════════════════════════════");
+
+            List<NeonCooperadoHelper.SetorInfo> setores = new List<NeonCooperadoHelper.SetorInfo>();
+            string cacheHospitalId = string.IsNullOrEmpty(hospitalId) ? "DEFAULT" : hospitalId;
+
+            // Setores padrão (fallback final)
+            var setoresPadrao = new List<(int, string)>
+            {
+                (1, "CENTRO CIRÚRGICO"),
+                (2, "EMERGÊNCIA"),
+                (3, "UTI"),
+                (4, "ENFERMARIA"),
+                (5, "LABORATÓRIO"),
+                (6, "RADIOLOGIA"),
+                (7, "FARMÁCIA"),
+                (8, "RECEPÇÃO"),
+                (9, "ADMINISTRATIVO")
+            };
+
             try
             {
-                lblStatus.Text = "⏳ Carregando setores...";
-                
-                List<NeonCooperadoHelper.SetorInfo> setores = new List<NeonCooperadoHelper.SetorInfo>();
-                
-                // ID padrão para cache quando hospital não está configurado
-                string cacheHospitalId = string.IsNullOrEmpty(hospitalId) ? "DEFAULT" : hospitalId;
-                
-                // Setores padrão (sempre disponível como fallback)
-                var setoresPadrao = new List<(int, string)>
-                {
-                    (1, "CENTRO CIRÚRGICO"),
-                    (2, "EMERGÊNCIA"),
-                    (3, "UTI"),
-                    (4, "ENFERMARIA"),
-                    (5, "LABORATÓRIO"),
-                    (6, "RADIOLOGIA"),
-                    (7, "FARMÁCIA"),
-                    (8, "RECEPÇÃO"),
-                    (9, "ADMINISTRATIVO")
-                };
+                Debug.WriteLine($"📋 hospitalId: '{hospitalId}', cacheId: '{cacheHospitalId}'");
 
-                Debug.WriteLine($"🔍 Iniciando carregamento de setores. hospitalId={hospitalId}, cacheId={cacheHospitalId}");
-
-                // Prioridade 1: Tentar Neon se tiver hospital configurado e neonHelper disponível
+                // Prioridade 1: Tentar Neon se tiver hospital e neonHelper
                 if (!string.IsNullOrEmpty(hospitalId) && neonHelper != null)
                 {
+                    Debug.WriteLine("🌐 Tentativa 1: Neon");
                     try
                     {
-                        Debug.WriteLine($"🌐 Tentando carregar do Neon para hospital {hospitalId}...");
                         setores = await neonHelper.GetSetoresDoHospitalAsync(hospitalId, database);
-                        lblStatus.Text = "✅ Setores carregados online.";
-                        Debug.WriteLine($"✅ {setores.Count} setores carregados do Neon com sucesso");
-                    }
-                    catch (Exception exNeon)
-                    {
-                        Debug.WriteLine($"⚠️ Erro ao carregar do Neon: {exNeon.Message}");
-                        setores.Clear();
-                        // Continuar para tentar cache
-                    }
-                }
-                else if (string.IsNullOrEmpty(hospitalId))
-                {
-                    Debug.WriteLine("ℹ️ Sem hospital configurado, pulando Neon");
-                }
-                else if (neonHelper == null)
-                {
-                    Debug.WriteLine("⚠️ neonHelper não inicializado");
-                }
-
-                // Prioridade 2: Tentar cache local
-                if (!setores.Any())
-                {
-                    Debug.WriteLine($"📂 Tentando carregar do cache para {cacheHospitalId}...");
-                    var setoresLocais = database.BuscarSetoresLocal(cacheHospitalId);
-                    
-                    if (setoresLocais.Any())
-                    {
-                        setores = setoresLocais.Select(s => new NeonCooperadoHelper.SetorInfo
+                        if (setores.Any())
                         {
-                            Id = s.Id,
-                            Nome = s.Nome
-                        }).ToList();
-                        
-                        lblStatus.Text = "📂 Setores carregados do cache local (offline).";
-                        Debug.WriteLine($"✅ {setores.Count} setores carregados do cache local");
+                            Debug.WriteLine($"✅ SUCESSO: {setores.Count} setores do Neon");
+                            lblStatus.Text = "✅ Setores carregados online.";
+                            ExibirSetores(setores);
+                            return;
+                        }
                     }
-                }
-
-                // Prioridade 3: Usar setores padrão como último recurso
-                if (!setores.Any())
-                {
-                    Debug.WriteLine($"📋 Carregando setores padrão e salvando no cache ({cacheHospitalId})...");
-                    
-                    // Salvar setores padrão no cache para futuro uso offline
-                    database.SalvarSetoresLocal(cacheHospitalId, setoresPadrao);
-                    
-                    setores = setoresPadrao.Select(s => new NeonCooperadoHelper.SetorInfo
+                    catch (Exception ex)
                     {
-                        Id = s.Item1,
-                        Nome = s.Item2
-                    }).ToList();
-                    
-                    lblStatus.Text = "📂 Usando setores padrão.";
-                    Debug.WriteLine($"📋 {setores.Count} setores padrão carregados e salvos no cache");
-                }
-                
-                // Exibir setores no combo
-                if (setores.Any())
-                {
-                    cmbSetor.Items.Clear();
-                    cmbSetor.Items.AddRange(setores.ToArray());
-                    cmbSetor.DisplayMember = "Nome";
-                    cmbSetor.ValueMember = "Id";
-                    cmbSetor.SelectedIndex = -1;
-                    Debug.WriteLine($"✅ {setores.Count} setores exibidos no dropdown");
+                        Debug.WriteLine($"❌ Neon falhou: {ex.Message}");
+                    }
                 }
                 else
                 {
-                    lblStatus.Text = "⚠️ Nenhum setor disponível.";
-                    Debug.WriteLine("⚠️ Nenhum setor disponível");
+                    Debug.WriteLine("⏭️ Pulando Neon: sem hospital configurado ou neonHelper null");
                 }
+
+                // Prioridade 2: Tentar cache local
+                Debug.WriteLine($"📂 Tentativa 2: Cache local ({cacheHospitalId})");
+                var setoresLocais = database.BuscarSetoresLocal(cacheHospitalId);
+                if (setoresLocais.Any())
+                {
+                    setores = setoresLocais.Select(s => new NeonCooperadoHelper.SetorInfo
+                    {
+                        Id = s.Id,
+                        Nome = s.Nome
+                    }).ToList();
+                    
+                    Debug.WriteLine($"✅ SUCESSO: {setores.Count} setores do cache");
+                    lblStatus.Text = "📂 Setores carregados do cache (offline).";
+                    ExibirSetores(setores);
+                    return;
+                }
+
+                // Prioridade 3: Setores padrão (sempre funciona)
+                Debug.WriteLine("📋 Tentativa 3: Setores padrão (fallback)");
+                database.SalvarSetoresLocal(cacheHospitalId, setoresPadrao);
+                
+                setores = setoresPadrao.Select(s => new NeonCooperadoHelper.SetorInfo
+                {
+                    Id = s.Item1,
+                    Nome = s.Item2
+                }).ToList();
+                
+                Debug.WriteLine($"✅ SUCESSO: {setores.Count} setores padrão carregados e salvos");
+                lblStatus.Text = "📂 Setores padrão carregados.";
+                ExibirSetores(setores);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Erro geral ao carregar setores: {ex.Message}\n{ex.StackTrace}");
-                lblStatus.Text = "⚠️ Erro ao carregar setores.";
+                Debug.WriteLine($"❌ ERRO GERAL: {ex.Message}");
+                Debug.WriteLine($"❌ Stack: {ex.StackTrace}");
                 
-                // Fallback final: exibir setores padrão como strings simples
+                // Fallback final: exibir setores padrão como string
+                Debug.WriteLine("🆘 Usando fallback final: strings padrão");
                 try
                 {
-                    var setoresPadrao = new string[] 
+                    cmbSetor.Items.Clear();
+                    cmbSetor.Items.AddRange(new string[] 
                     {
                         "CENTRO CIRÚRGICO",
                         "EMERGÊNCIA",
@@ -266,16 +245,35 @@ namespace BiometricSystem.Forms
                         "FARMÁCIA",
                         "RECEPÇÃO",
                         "ADMINISTRATIVO"
-                    };
-                    cmbSetor.Items.Clear();
-                    cmbSetor.Items.AddRange(setoresPadrao);
+                    });
                     cmbSetor.SelectedIndex = -1;
-                    Debug.WriteLine("✅ Setores padrão carregados como fallback");
+                    lblStatus.Text = "📂 Setores padrão (modo emergência).";
+                    Debug.WriteLine("✅ Fallback final funcionou");
                 }
-                catch (Exception exFallback)
+                catch (Exception exFinal)
                 {
-                    Debug.WriteLine($"❌ Erro ao carregar fallback: {exFallback.Message}");
+                    Debug.WriteLine($"❌ Até o fallback falhou: {exFinal.Message}");
+                    lblStatus.Text = "⚠️ Erro crítico ao carregar setores.";
                 }
+            }
+
+            Debug.WriteLine("═══════════════════════════════════════════");
+        }
+
+        private void ExibirSetores(List<NeonCooperadoHelper.SetorInfo> setores)
+        {
+            try
+            {
+                cmbSetor.Items.Clear();
+                cmbSetor.Items.AddRange(setores.ToArray());
+                cmbSetor.DisplayMember = "Nome";
+                cmbSetor.ValueMember = "Id";
+                cmbSetor.SelectedIndex = -1;
+                Debug.WriteLine($"✅ Dropdown exibindo {setores.Count} setores");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao exibir setores: {ex.Message}");
             }
         }
 
