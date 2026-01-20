@@ -21,12 +21,36 @@ namespace BiometricSystem.Forms
         private string? hospitalId;
         private string? hospitalNome;
         private string? hospitalCodigo;
+        private System.Windows.Forms.Timer? clearPanelTimer; // Timer para limpar painel após registro
 
         public LoginForm(IConfiguration? config = null)
         {
             InitializeComponent();
             fingerprintService = new FingerprintService();
             database = new DatabaseHelper();
+            
+            // Inicializar timer para limpeza de painel
+            clearPanelTimer = new System.Windows.Forms.Timer();
+            clearPanelTimer.Tick += (sender, e) =>
+            {
+                try
+                {
+                    LogToFile($"⏰ Timer disparado - limpando painel");
+                    clearPanelTimer.Stop();
+                    
+                    panelSimulador.BackColor = System.Drawing.Color.White;
+                    lblSimulador.Text = "";
+                    lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F);
+                    lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+                    lblStatus.Text = "Selecione o setor para ativar o leitor";
+                    
+                    LogToFile($"⏰ Painel limpo com sucesso");
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"❌ Erro ao limpar painel: {ex.Message}");
+                }
+            };
 
             // Inicializar sincronização com Neon se configuração disponível
             if (config != null)
@@ -127,16 +151,6 @@ namespace BiometricSystem.Forms
                 using (GraphicsPath path = GetRoundedRectangle(panelSimulador.ClientRectangle, 15))
                 {
                     panelSimulador.Region = new Region(path);
-                }
-            };
-            
-            // Arredondar botão
-            btnRegister.Paint += (s, e) =>
-            {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                using (GraphicsPath path = GetRoundedRectangle(btnRegister.ClientRectangle, 10))
-                {
-                    btnRegister.Region = new Region(path);
                 }
             };
         }
@@ -290,7 +304,7 @@ namespace BiometricSystem.Forms
             
             return path;
         }
-
+        
         private void CentralizarControles()
         {
             int centerX = this.ClientSize.Width / 2;
@@ -314,9 +328,6 @@ namespace BiometricSystem.Forms
             // Centralizar status
             lblStatus.Left = centerX - 350;
             lblStatus.Width = 700;
-            
-            // Centralizar botão
-            btnRegister.Left = centerX - (btnRegister.Width / 2);
         }
 
         private void LoginForm_Resize(object sender, EventArgs e)
@@ -360,7 +371,6 @@ namespace BiometricSystem.Forms
             {
                 // Desabilitar combo durante captura
                 cmbSetor.Enabled = false;
-                btnRegister.Enabled = false;
                 isCapturing = true;
 
                 lblStatus.Text = $"⏳ Setor: {selectedSetor} - Posicione o dedo no leitor...";
@@ -373,7 +383,6 @@ namespace BiometricSystem.Forms
 
                 // Reabilitar após captura
                 cmbSetor.Enabled = true;
-                btnRegister.Enabled = true;
                 isCapturing = false;
                 panelFingerprint.BackColor = System.Drawing.Color.White;
             }
@@ -440,9 +449,20 @@ namespace BiometricSystem.Forms
                     
                     // Buscar o ÚLTIMO tipo de ponto registrado localmente
                     var ultimoTipo = database.GetUltimoPontoTipo(matchedCooperadoId);
-                    string tipoRegistro = (ultimoTipo == null || ultimoTipo == "Saída") ? "Entrada" : "Saída";
+                    
+                    // O banco salva como "ENTRADA" ou "SAIDA" (maiúsculas sem acento)
+                    // Determinar o próximo tipo baseado no último
+                    string tipoRegistro;
+                    if (string.IsNullOrEmpty(ultimoTipo) || ultimoTipo.Equals("SAIDA", StringComparison.OrdinalIgnoreCase))
+                    {
+                        tipoRegistro = "ENTRADA";  // Se não há registro ou último foi saída, registrar entrada
+                    }
+                    else
+                    {
+                        tipoRegistro = "SAIDA";    // Se último foi entrada, registrar saída
+                    }
 
-                    LogToFile($"   Tipo de registro: {tipoRegistro}");
+                    LogToFile($"   Tipo de registro: {tipoRegistro} (último registro foi: {ultimoTipo ?? "nenhum"})");
 
                     // Formatar local como no sistema web: "CODIGO_HOSPITAL - SETOR"
                     string localFormatado = string.IsNullOrEmpty(hospitalCodigo) 
@@ -520,28 +540,39 @@ namespace BiometricSystem.Forms
 
         private void ExibirRegistroPontoLocal(string nomeCooperado, string tipo, DateTime horario)
         {
+            // Parar timer anterior se existir
+            if (clearPanelTimer != null)
+            {
+                clearPanelTimer.Stop();
+                clearPanelTimer.Dispose();
+                clearPanelTimer = null;
+            }
+            
             // Definir cores conforme o tipo
             Color backgroundColor;
             Color textColor;
             string emoji;
+            string tipoExibicao;
             
-            if (tipo == "Entrada")
+            if (tipo.Equals("ENTRADA", StringComparison.OrdinalIgnoreCase))
             {
                 backgroundColor = System.Drawing.Color.FromArgb(230, 255, 240); // Verde claro
                 textColor = System.Drawing.Color.FromArgb(0, 120, 60);
                 emoji = "➜";
+                tipoExibicao = "ENTRADA";
             }
             else
             {
                 backgroundColor = System.Drawing.Color.FromArgb(255, 235, 235); // Vermelho claro
                 textColor = System.Drawing.Color.FromArgb(180, 30, 30);
                 emoji = "⬅";
+                tipoExibicao = "SAÍDA";
             }
             
             panelSimulador.BackColor = backgroundColor;
             
             // Montar texto formatado
-            string textoExibicao = $"{emoji}  {tipo.ToUpper()} REGISTRADA\n\n";
+            string textoExibicao = $"{emoji}  {tipoExibicao} REGISTRADA\n\n";
             textoExibicao += $"{nomeCooperado}\n";
             textoExibicao += $"Cooperado\n\n";
             textoExibicao += $"📍 {selectedSetor}\n";
@@ -552,19 +583,66 @@ namespace BiometricSystem.Forms
             lblSimulador.ForeColor = textColor;
             lblSimulador.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             
-            lblStatus.Text = $"✅ {tipo} registrada - {nomeCooperado}";
+            lblStatus.Text = $"✅ {tipoExibicao} registrada - {nomeCooperado}";
             
-            // Limpar painel após 5 segundos
-            var timer = new System.Windows.Forms.Timer();
-            timer.Interval = 5000;
-            timer.Tick += (s, e) => { if (InvokeRequired) { Invoke(() => { panelSimulador.BackColor = System.Drawing.Color.White; lblSimulador.Text = ""; lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F); lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft; lblStatus.Text = "Selecione o setor para ativar o leitor"; }); } else { panelSimulador.BackColor = System.Drawing.Color.White; lblSimulador.Text = ""; lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F); lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft; lblStatus.Text = "Selecione o setor para ativar o leitor"; } timer.Stop(); timer.Dispose(); };
-            timer.Start();
+            LogToFile($"⏰ Agendando limpeza do painel em 5 segundos...");
+            
+            // Usar thread separada para aguardar 5 segundos e depois limpar
+            var cleanupThread = new Thread(() =>
+            {
+                try
+                {
+                    Thread.Sleep(5000);
+                    
+                    // Executar na thread UI
+                    this.Invoke(new Action(() =>
+                    {
+                        try
+                        {
+                            LogToFile($"⏰ Limpando painel após 5 segundos");
+                            panelSimulador.BackColor = System.Drawing.Color.White;
+                            lblSimulador.Text = "";
+                            lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F);
+                            lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+                            lblStatus.Text = "Selecione o setor para ativar o leitor";
+                            LogToFile($"⏰ Painel limpo com sucesso");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogToFile($"❌ Erro ao limpar: {ex.Message}");
+                        }
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"❌ Erro na thread: {ex.Message}");
+                }
+            })
+            {
+                IsBackground = true
+            };
+            cleanupThread.Start();
         }
-
-        private void btnRegister_Click(object sender, EventArgs e)
+        
+        
+        private void LimparPainelSimulador()
         {
-            var registerForm = new RegisterForm();
-            registerForm.ShowDialog();
+            try
+            {
+                LogToFile($"⏰ Limpando painel - início");
+                
+                panelSimulador.BackColor = System.Drawing.Color.White;
+                lblSimulador.Text = "";
+                lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F);
+                lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+                lblStatus.Text = "Selecione o setor para ativar o leitor";
+                
+                LogToFile($"⏰ Limpando painel - concluído");
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"❌ Erro em LimparPainelSimulador: {ex.Message}");
+            }
         }
 
         private void btnCadastrarBiometria_Click(object sender, EventArgs e)
@@ -717,6 +795,14 @@ namespace BiometricSystem.Forms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            // Limpar timer se estiver ativo
+            if (clearPanelTimer != null)
+            {
+                clearPanelTimer.Stop();
+                clearPanelTimer.Dispose();
+                clearPanelTimer = null;
+            }
+            
             syncService?.StopAutoSync();
             fingerprintService.Dispose();
             base.OnFormClosing(e);

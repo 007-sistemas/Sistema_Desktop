@@ -35,7 +35,6 @@ namespace BiometricSystem.Forms
             
             this.lblModoSimulacao = new System.Windows.Forms.Label();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.btnRegister = new System.Windows.Forms.Button();
             this.btnCadastrarBiometria = new System.Windows.Forms.Button();
             
             this.timerClock = new System.Windows.Forms.Timer(this.components);
@@ -110,26 +109,25 @@ namespace BiometricSystem.Forms
             this.cmbSetor.TabIndex = 4;
             this.cmbSetor.SelectedIndexChanged += new System.EventHandler(this.cmbSetor_SelectedIndexChanged);
             
-            // lblInstrucao
-            this.lblInstrucao.AutoSize = false;
-            this.lblInstrucao.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Italic);
-            this.lblInstrucao.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
-            this.lblInstrucao.Location = new System.Drawing.Point(100, 282);
-            this.lblInstrucao.Name = "lblInstrucao";
-            this.lblInstrucao.Size = new System.Drawing.Size(700, 20);
-            this.lblInstrucao.TabIndex = 8;
-            this.lblInstrucao.Text = "Para registrar o plantão, selecione o setor e em seguida pressione a digital";
-            this.lblInstrucao.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            
             // panelSimulador
             this.panelSimulador.BackColor = System.Drawing.Color.White;
             this.panelSimulador.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.panelSimulador.Controls.Add(this.lblSimulador);
-            this.panelSimulador.Location = new System.Drawing.Point(190, 310);
+            this.panelSimulador.Location = new System.Drawing.Point(140, 310);
             this.panelSimulador.Name = "panelSimulador";
-            this.panelSimulador.Size = new System.Drawing.Size(520, 220);
+            this.panelSimulador.Size = new System.Drawing.Size(620, 250);
             this.panelSimulador.TabIndex = 5;
-            this.panelSimulador.Padding = new System.Windows.Forms.Padding(20);
+            
+            // lblInstrucao
+            this.lblInstrucao.AutoSize = false;
+            this.lblInstrucao.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.lblInstrucao.ForeColor = System.Drawing.Color.FromArgb(80, 80, 80);
+            this.lblInstrucao.Location = new System.Drawing.Point(100, 280);
+            this.lblInstrucao.Name = "lblInstrucao";
+            this.lblInstrucao.Size = new System.Drawing.Size(700, 25);
+            this.lblInstrucao.TabIndex = 8;
+            this.lblInstrucao.Text = "Para registrar o plantão, selecione o setor e pressione a digital";
+            this.lblInstrucao.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             
             // lblSimulador
             this.lblSimulador.BackColor = System.Drawing.Color.Transparent;
@@ -139,7 +137,7 @@ namespace BiometricSystem.Forms
             this.lblSimulador.Location = new System.Drawing.Point(0, 0);
             this.lblSimulador.Name = "lblSimulador";
             this.lblSimulador.Padding = new System.Windows.Forms.Padding(20);
-            this.lblSimulador.Size = new System.Drawing.Size(518, 280);
+            this.lblSimulador.Size = new System.Drawing.Size(520, 220);
             this.lblSimulador.TabIndex = 0;
             this.lblSimulador.Text = "";
             this.lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft;
@@ -203,22 +201,6 @@ namespace BiometricSystem.Forms
             this.lblStatus.Text = "Selecione o setor para ativar o leitor";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             
-            // btnRegister
-            this.btnRegister.BackColor = System.Drawing.Color.FromArgb(34, 139, 87);
-            this.btnRegister.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnRegister.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(34, 139, 87);
-            this.btnRegister.FlatAppearance.BorderSize = 0;
-            this.btnRegister.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRegister.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.btnRegister.ForeColor = System.Drawing.Color.White;
-            this.btnRegister.Location = new System.Drawing.Point(320, 585);
-            this.btnRegister.Name = "btnRegister";
-            this.btnRegister.Size = new System.Drawing.Size(260, 50);
-            this.btnRegister.TabIndex = 7;
-            this.btnRegister.Text = "📝 Cadastrar Novo Funcionário";
-            this.btnRegister.UseVisualStyleBackColor = false;
-            this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
-            
             // btnCadastrarBiometria
             this.btnCadastrarBiometria.BackColor = System.Drawing.Color.FromArgb(33, 150, 243);
             this.btnCadastrarBiometria.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -247,7 +229,6 @@ namespace BiometricSystem.Forms
             this.ClientSize = new System.Drawing.Size(900, 680);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.btnCadastrarBiometria);
-            this.Controls.Add(this.btnRegister);
             this.Controls.Add(this.panelSimulador);
             this.Controls.Add(this.lblInstrucao);
             this.Controls.Add(this.cmbSetor);
@@ -282,7 +263,6 @@ namespace BiometricSystem.Forms
         private System.Windows.Forms.Label lblFingerprint;
         private System.Windows.Forms.Label lblModoSimulacao;
         private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.Button btnRegister;
         private System.Windows.Forms.Button btnCadastrarBiometria;
         private System.Windows.Forms.Timer timerClock;
     }

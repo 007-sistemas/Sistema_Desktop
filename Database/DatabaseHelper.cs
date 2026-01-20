@@ -632,6 +632,40 @@ namespace BiometricSystem.Database
             return null;
         }
 
+        public bool TemRegistroRecente(string cooperadoId, int segundosMinimos = 30)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                // Buscar o último registro deste cooperado
+                string query = @"SELECT Timestamp FROM Pontos 
+                               WHERE CooperadoId = @CooperadoId 
+                               ORDER BY Timestamp DESC LIMIT 1";
+                
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                using var reader = cmd.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    string timestampStr = reader.GetString(0);
+                    if (DateTime.TryParse(timestampStr, out DateTime ultimoRegistro))
+                    {
+                        var diferencaSegundos = (DateTime.Now - ultimoRegistro).TotalSeconds;
+                        return diferencaSegundos < segundosMinimos;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao verificar registro recente: {ex.Message}");
+            }
+
+            return false;
+        }
+
         private (string Id, string Codigo)? ObterUltimaEntrada(string cooperadoId)
         {
             try
