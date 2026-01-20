@@ -35,7 +35,6 @@ namespace BiometricSystem.Forms
             
             this.lblModoSimulacao = new System.Windows.Forms.Label();
             this.lblStatus = new System.Windows.Forms.Label();
-            this.btnCadastrarBiometria = new System.Windows.Forms.Button();
             
             this.timerClock = new System.Windows.Forms.Timer(this.components);
             
@@ -201,22 +200,6 @@ namespace BiometricSystem.Forms
             this.lblStatus.Text = "Selecione o setor para ativar o leitor";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             
-            // btnCadastrarBiometria
-            this.btnCadastrarBiometria.BackColor = System.Drawing.Color.FromArgb(33, 150, 243);
-            this.btnCadastrarBiometria.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnCadastrarBiometria.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(33, 150, 243);
-            this.btnCadastrarBiometria.FlatAppearance.BorderSize = 0;
-            this.btnCadastrarBiometria.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCadastrarBiometria.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.btnCadastrarBiometria.ForeColor = System.Drawing.Color.White;
-            this.btnCadastrarBiometria.Location = new System.Drawing.Point(100, 585);
-            this.btnCadastrarBiometria.Name = "btnCadastrarBiometria";
-            this.btnCadastrarBiometria.Size = new System.Drawing.Size(200, 50);
-            this.btnCadastrarBiometria.TabIndex = 8;
-            this.btnCadastrarBiometria.Text = "👆 Cadastrar Biometria";
-            this.btnCadastrarBiometria.UseVisualStyleBackColor = false;
-            this.btnCadastrarBiometria.Click += new System.EventHandler(this.btnCadastrarBiometria_Click);
-            
             // timerClock
             this.timerClock.Enabled = true;
             this.timerClock.Interval = 1000;
@@ -228,7 +211,6 @@ namespace BiometricSystem.Forms
             this.BackColor = System.Drawing.Color.FromArgb(240, 242, 245);
             this.ClientSize = new System.Drawing.Size(900, 680);
             this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.btnCadastrarBiometria);
             this.Controls.Add(this.panelSimulador);
             this.Controls.Add(this.lblInstrucao);
             this.Controls.Add(this.cmbSetor);
@@ -263,7 +245,6 @@ namespace BiometricSystem.Forms
         private System.Windows.Forms.Label lblFingerprint;
         private System.Windows.Forms.Label lblModoSimulacao;
         private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.Button btnCadastrarBiometria;
         private System.Windows.Forms.Timer timerClock;
     }
 }

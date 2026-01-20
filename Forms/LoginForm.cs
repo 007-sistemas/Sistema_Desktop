@@ -22,6 +22,7 @@ namespace BiometricSystem.Forms
         private string? hospitalNome;
         private string? hospitalCodigo;
         private System.Windows.Forms.Timer? clearPanelTimer; // Timer para limpar painel após registro
+        public bool AllowClose { get; set; } = false; // Controla se pode fechar realmente
 
         public LoginForm(IConfiguration? config = null)
         {
@@ -645,39 +646,6 @@ namespace BiometricSystem.Forms
             }
         }
 
-        private void btnCadastrarBiometria_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Obter a string de conexão do NEON
-                string? neonConnectionString = null;
-                
-                if (syncService != null)
-                {
-                    // Tentar obter a string de conexão através da sincronização
-                    // Se não estiver disponível, precisamos passar através de outro meio
-                    neonConnectionString = "Host=ep-dry-dawn-ahl0dlm6-pooler.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_lOhyE4z1QBtc;SSL Mode=Require;Trust Server Certificate=true";
-                }
-                else
-                {
-                    // Fallback: usar a string fornecida
-                    neonConnectionString = "Host=ep-dry-dawn-ahl0dlm6-pooler.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_lOhyE4z1QBtc;SSL Mode=Require;Trust Server Certificate=true";
-                }
-
-                var biometriaForm = new CadastrarBiometriaForm(neonConnectionString);
-                biometriaForm.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Erro ao abrir tela de cadastro de biometria:\n{ex.Message}",
-                    "Erro",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
-            }
-        }
-
         /// <summary>
         /// Sincroniza registros locais (não sincronizados) com NEON em background
         /// Executa de forma assíncrona e não bloqueia a UI
@@ -795,6 +763,26 @@ namespace BiometricSystem.Forms
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            // Se AllowClose for true, permite fechar sem abrir menu
+            if (AllowClose)
+            {
+                // Limpar timer se estiver ativo
+                if (clearPanelTimer != null)
+                {
+                    clearPanelTimer.Stop();
+                    clearPanelTimer.Dispose();
+                    clearPanelTimer = null;
+                }
+                
+                syncService?.StopAutoSync();
+                fingerprintService.Dispose();
+                base.OnFormClosing(e);
+                return;
+            }
+            
+            // Cancelar o fechamento e mostrar tela de acesso
+            e.Cancel = true;
+            
             // Limpar timer se estiver ativo
             if (clearPanelTimer != null)
             {
@@ -804,8 +792,17 @@ namespace BiometricSystem.Forms
             }
             
             syncService?.StopAutoSync();
-            fingerprintService.Dispose();
-            base.OnFormClosing(e);
+            
+            // Abrir tela de acesso
+            try
+            {
+                var accessForm = new AccessMenuForm(this);
+                accessForm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao abrir tela de acesso: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
