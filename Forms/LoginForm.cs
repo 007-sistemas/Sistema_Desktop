@@ -452,6 +452,28 @@ namespace BiometricSystem.Forms
                     string tipoRegistro = database.DecidirTipoProximoPonto(matchedCooperadoId, 14, 16);
                     LogToFile($"   Tipo de registro: {tipoRegistro} (lógica tolerância/plantão)");
 
+                    // Bloqueio: se última ENTRADA foi há menos de 1 hora, não permite SAÍDA
+                    if (tipoRegistro == "SAIDA")
+                    {
+                        var ultimaEntradaDt = database.ObterTimestampUltimaEntrada(matchedCooperadoId);
+                        if (ultimaEntradaDt != null)
+                        {
+                            var agora = DateTimeOffset.Now;
+                            var diff = (agora - ultimaEntradaDt.Value).TotalMinutes;
+                            if (diff <= 60)
+                            {
+                                // Exibir alerta amarelo
+                                panelSimulador.BackColor = System.Drawing.Color.FromArgb(255, 255, 200); // Amarelo claro
+                                lblSimulador.Text = $"⚠️ {matchedCooperadoNome}, você já possui um registro de ENTRADA às {ultimaEntradaDt:HH:mm}.";
+                                lblSimulador.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+                                lblSimulador.ForeColor = System.Drawing.Color.FromArgb(180, 120, 0); // Amarelo escuro
+                                lblSimulador.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                                lblStatus.Text = $"⚠️ ENTRADA recente - {matchedCooperadoNome}";
+                                return;
+                            }
+                        }
+                    }
+
                     // Formatar local como no sistema web: "CODIGO_HOSPITAL - SETOR"
                     string localFormatado = string.IsNullOrEmpty(hospitalCodigo)
                         ? (selectedSetor ?? "N/A")

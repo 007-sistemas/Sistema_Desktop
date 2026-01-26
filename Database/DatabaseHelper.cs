@@ -642,7 +642,7 @@ namespace BiometricSystem.Database
             return false;
         }
 
-        private (string Id, string Codigo)? ObterUltimaEntrada(string cooperadoId)
+        public (string Id, string Codigo)? ObterUltimaEntrada(string cooperadoId)
         {
             try
             {
@@ -669,6 +669,31 @@ namespace BiometricSystem.Database
                 System.Diagnostics.Debug.WriteLine($"Erro ao buscar última entrada: {ex.Message}");
             }
 
+            return null;
+        }
+
+        // Retorna o DateTimeOffset da última ENTRADA do cooperado
+        public DateTimeOffset? ObterTimestampUltimaEntrada(string cooperadoId)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+                string query = @"SELECT Timestamp FROM Pontos WHERE CooperadoId = @CooperadoId AND Tipo = 'ENTRADA' ORDER BY datetime(Timestamp) DESC LIMIT 1";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    string timestampStr = reader.GetString(0);
+                    if (DateTimeOffset.TryParse(timestampStr, out var ultimaEntradaDt))
+                        return ultimaEntradaDt;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao buscar timestamp da última entrada: {ex.Message}");
+            }
             return null;
         }
 

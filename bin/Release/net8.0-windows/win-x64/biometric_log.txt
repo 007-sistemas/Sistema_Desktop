@@ -2013,3 +2013,72 @@
 [2026-01-26 17:51:11.960] ✅ [SYNC] Sincronização com NEON concluída
 [2026-01-26 17:51:16.493] ⏰ Limpando painel após 5 segundos
 [2026-01-26 17:51:16.498] ⏰ Painel limpo com sucesso
+[2026-01-26 17:53:00.638] 🏢 Buscando setores do hospital d580d8f3-0e0f-4431-87c9-939536891094...
+[2026-01-26 17:53:02.467]    ✅ Conexão estabelecida
+[2026-01-26 17:53:02.467]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-26 17:53:02.963]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-26 17:53:02.964]    🏢 Setor #2: ID=7, Nome=NEONATOLOGIA
+[2026-01-26 17:53:02.964]    🏢 Setor #3: ID=6, Nome=SESMT
+[2026-01-26 17:53:02.965]    🏢 Setor #4: ID=5, Nome=UTI
+[2026-01-26 17:53:02.965]    🏢 Setor #5: ID=8, Nome=UTIN
+[2026-01-26 17:53:02.966]    ✅ Total: 5 setores encontrados
+[2026-01-26 17:53:03.298]    💾 Setores salvos no cache local
+[2026-01-26 17:53:06.624] 🔍 OnFingerprintCaptured - Iniciando verificação LOCAL
+[2026-01-26 17:53:06.624] 📡 Buscando biometrias do SQLite local...
+[2026-01-26 17:53:06.695] ✅ Biometrias retornadas: 2
+[2026-01-26 17:53:06.695] 🔍 Verificando template capturado contra 2 biometrias...
+[2026-01-26 17:53:06.695]    Testando biometria 1: Gabriel Gomes da Silva Lima (1632 bytes)
+[2026-01-26 17:53:06.703]    ✅ MATCH! Cooperado: Gabriel Gomes da Silva Lima
+[2026-01-26 17:53:06.703] ✅ Digital identificada: Gabriel Gomes da Silva Lima
+[2026-01-26 17:53:06.790]    Tipo de registro: ENTRADA (lógica tolerância/plantão)
+[2026-01-26 17:53:06.809]    ✅ Ponto registrado localmente com sucesso!
+[2026-01-26 17:53:06.852] ⏰ Agendando limpeza do painel em 5 segundos...
+[2026-01-26 17:53:06.856]    ℹ️ Disparando sincronização em background...
+[2026-01-26 17:53:06.857]    ℹ️ Sincronização disparada (método async)
+[2026-01-26 17:53:06.970] 🔄 [SYNC] Iniciando sincronização com NEON em background...
+[2026-01-26 17:53:06.983]    📊 Pontos não sincronizados: 1
+[2026-01-26 17:53:06.983]    📤 Sincronizando ponto: Gabriel Gomes da Silva Lima - ENTRADA
+[2026-01-26 17:53:06.988] 📤 Iniciando registro de ponto no NEON: Gabriel Gomes da Silva Lima - ENTRADA
+[2026-01-26 17:53:06.989]    SQL Insert ponto id=bd96aeea-0136-49bc-9047-f651a01fa5a8, codigo=bd96aeea, coop=af95c39d-88ba-4b1f-84e6-480eb5cd922e, tipo=ENTRADA, hosp=d580d8f3-0e0f-4431-87c9-939536891094, setor=7
+[2026-01-26 17:53:07.121]    ✅ Ponto registrado no NEON (rows affected: 1)
+[2026-01-26 17:53:07.432]    ✅ Ponto bd96aeea-0136-49bc-9047-f651a01fa5a8 sincronizado com NEON
+[2026-01-26 17:53:07.437]    📊 Biometrias não sincronizadas: 0
+[2026-01-26 17:53:07.438] ✅ [SYNC] Sincronização com NEON concluída
+[2026-01-26 17:53:11.860] ⏰ Limpando painel após 5 segundos
+[2026-01-26 17:53:11.865] ⏰ Painel limpo com sucesso
+[2026-01-26 18:07:27.038] 🏢 Buscando setores do hospital d580d8f3-0e0f-4431-87c9-939536891094...
+[2026-01-26 18:07:28.483]    ✅ Conexão estabelecida
+[2026-01-26 18:07:28.484]    📝 Query SQL: 
+                    SELECT DISTINCT s.id, s.nome 
+                    FROM hospital_setores hs
+                    INNER JOIN setores s ON hs.setor_id = s.id
+                    WHERE hs.hospital_id = @hospital_id
+                    ORDER BY s.nome
+[2026-01-26 18:07:28.700]    🏢 Setor #1: ID=1, Nome=CENTRO CIRURGICO
+[2026-01-26 18:07:28.701]    🏢 Setor #2: ID=7, Nome=NEONATOLOGIA
+[2026-01-26 18:07:28.702]    🏢 Setor #3: ID=6, Nome=SESMT
+[2026-01-26 18:07:28.702]    🏢 Setor #4: ID=5, Nome=UTI
+[2026-01-26 18:07:28.703]    🏢 Setor #5: ID=8, Nome=UTIN
+[2026-01-26 18:07:28.704]    ✅ Total: 5 setores encontrados
+[2026-01-26 18:07:28.816]    💾 Setores salvos no cache local
+[2026-01-26 18:07:31.628] 🔍 OnFingerprintCaptured - Iniciando verificação LOCAL
+[2026-01-26 18:07:31.628] 📡 Buscando biometrias do SQLite local...
+[2026-01-26 18:07:31.634] ✅ Biometrias retornadas: 2
+[2026-01-26 18:07:31.635] 🔍 Verificando template capturado contra 2 biometrias...
+[2026-01-26 18:07:31.635]    Testando biometria 1: Gabriel Gomes da Silva Lima (1632 bytes)
+[2026-01-26 18:07:31.650]    ✅ MATCH! Cooperado: Gabriel Gomes da Silva Lima
+[2026-01-26 18:07:31.650] ✅ Digital identificada: Gabriel Gomes da Silva Lima
+[2026-01-26 18:07:31.666]    Tipo de registro: SAIDA (lógica tolerância/plantão)
+[2026-01-26 18:08:04.302] 🔍 OnFingerprintCaptured - Iniciando verificação LOCAL
+[2026-01-26 18:08:04.303] 📡 Buscando biometrias do SQLite local...
+[2026-01-26 18:08:04.307] ✅ Biometrias retornadas: 2
+[2026-01-26 18:08:04.308] 🔍 Verificando template capturado contra 2 biometrias...
+[2026-01-26 18:08:04.308]    Testando biometria 1: Gabriel Gomes da Silva Lima (1632 bytes)
+[2026-01-26 18:08:04.311]    ✅ MATCH! Cooperado: Gabriel Gomes da Silva Lima
+[2026-01-26 18:08:04.312] ✅ Digital identificada: Gabriel Gomes da Silva Lima
+[2026-01-26 18:08:04.316]    Tipo de registro: SAIDA (lógica tolerância/plantão)
