@@ -27,6 +27,19 @@ namespace BiometricSystem.Forms
             this.lblInstrucao = new System.Windows.Forms.Label();
             
             this.panelSimulador = new System.Windows.Forms.Panel();
+
+            // Arredondar bordas do panelSimulador
+            this.panelSimulador.Paint += (s, e) =>
+            {
+                System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+                int radius = 24;
+                path.AddArc(0, 0, radius, radius, 180, 90);
+                path.AddArc(this.panelSimulador.Width - radius, 0, radius, radius, 270, 90);
+                path.AddArc(this.panelSimulador.Width - radius, this.panelSimulador.Height - radius, radius, radius, 0, 90);
+                path.AddArc(0, this.panelSimulador.Height - radius, radius, radius, 90, 90);
+                path.CloseAllFigures();
+                this.panelSimulador.Region = new System.Drawing.Region(path);
+            };
             this.lblSimulador = new System.Windows.Forms.Label();
             this.btnSimular = new System.Windows.Forms.Button();
             
@@ -112,7 +125,8 @@ namespace BiometricSystem.Forms
             this.panelSimulador.BackColor = System.Drawing.Color.White;
             this.panelSimulador.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.panelSimulador.Controls.Add(this.lblSimulador);
-            this.panelSimulador.Location = new System.Drawing.Point(140, 310);
+            // Descer mais o painel simulador
+            this.panelSimulador.Location = new System.Drawing.Point(140, 360);
             this.panelSimulador.Name = "panelSimulador";
             this.panelSimulador.Size = new System.Drawing.Size(620, 250);
             this.panelSimulador.TabIndex = 5;
@@ -193,12 +207,27 @@ namespace BiometricSystem.Forms
             this.lblStatus.BackColor = System.Drawing.Color.White;
             this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.lblStatus.ForeColor = System.Drawing.Color.Gray;
-            this.lblStatus.Location = new System.Drawing.Point(100, 540);
+            // Posiciona a caixa mais abaixo da caixa de cima (panelSimulador)
+            this.lblStatus.Location = new System.Drawing.Point(140, 630); // Descer mais
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(700, 30);
+            // Mesma largura da caixa de cima (panelSimulador)
+            this.lblStatus.Size = new System.Drawing.Size(620, 40); // Largura igual ao panelSimulador
             this.lblStatus.TabIndex = 6;
             this.lblStatus.Text = "Selecione o setor para ativar o leitor";
-            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblStatus.Padding = new System.Windows.Forms.Padding(0, 8, 0, 8); // Espaço interno
+            this.lblStatus.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            // Bordas arredondadas
+            this.lblStatus.Paint += (s, e) => {
+                System.Drawing.Drawing2D.GraphicsPath path = new System.Drawing.Drawing2D.GraphicsPath();
+                int radius = 15;
+                path.AddArc(0, 0, radius, radius, 180, 90);
+                path.AddArc(this.lblStatus.Width - radius, 0, radius, radius, 270, 90);
+                path.AddArc(this.lblStatus.Width - radius, this.lblStatus.Height - radius, radius, radius, 0, 90);
+                path.AddArc(0, this.lblStatus.Height - radius, radius, radius, 90, 90);
+                path.CloseAllFigures();
+                this.lblStatus.Region = new System.Drawing.Region(path);
+            };
             
             // timerClock
             this.timerClock.Enabled = true;

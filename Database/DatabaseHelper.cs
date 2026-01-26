@@ -1,11 +1,77 @@
+
+
+using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using BiometricSystem.Models;
 
 namespace BiometricSystem.Database
 {
-    public class DatabaseHelper
-    {
-        private readonly string connectionString;
+        public class DatabaseHelper
+        {
+            private readonly string connectionString;
+
+            /// <summary>
+            /// Retorna todas as biometrias cadastradas localmente
+            /// </summary>
+            public List<(string CooperadoId, string CooperadoNome, byte[] Template)> BuscarBiometriasLocais()
+            {
+                var biometrias = new List<(string CooperadoId, string CooperadoNome, byte[] Template)>();
+                try
+                {
+                    using var connection = new SQLiteConnection(connectionString);
+                    connection.Open();
+                    string query = "SELECT CooperadoId, CooperadoNome, Template FROM Biometrias";
+                    using var cmd = new SQLiteCommand(query, connection);
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string cooperadoId = reader.GetString(0);
+                        string cooperadoNome = reader.GetString(1);
+                        byte[] template = (byte[])reader[2];
+                        biometrias.Add((cooperadoId, cooperadoNome, template));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao buscar biometrias locais: {ex.Message}");
+                }
+                return biometrias;
+            }
+
+            /// <summary>
+            /// Salva um registro de ponto local na tabela Pontos
+            /// </summary>
+            public bool SalvarPontoLocal(string cooperadoId, string cooperadoNome, string tipo, string local, string? hospitalId, int? setorId)
+            {
+                try
+                {
+                    using var connection = new SQLiteConnection(connectionString);
+                    connection.Open();
+                    string id = Guid.NewGuid().ToString();
+                    string codigo = id.Substring(0, 8); // Código simplificado
+                    string query = @"INSERT INTO Pontos (Id, Codigo, CooperadoId, CooperadoNome, Timestamp, Tipo, Local, HospitalId, SetorId, Status, IsManual, SyncedToNeon) 
+                                    VALUES (@Id, @Codigo, @CooperadoId, @CooperadoNome, @Timestamp, @Tipo, @Local, @HospitalId, @SetorId, @Status, @IsManual, 0)";
+                    using var cmd = new SQLiteCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.Parameters.AddWithValue("@Codigo", codigo);
+                    cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                    cmd.Parameters.AddWithValue("@CooperadoNome", cooperadoNome);
+                    cmd.Parameters.AddWithValue("@Timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                    cmd.Parameters.AddWithValue("@Tipo", tipo);
+                    cmd.Parameters.AddWithValue("@Local", local ?? "");
+                    cmd.Parameters.AddWithValue("@HospitalId", hospitalId ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@SetorId", setorId ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@Status", "Aberto");
+                    cmd.Parameters.AddWithValue("@IsManual", 0);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao salvar ponto local: {ex.Message}");
+                    return false;
+                }
+            }
 
         public DatabaseHelper()
         {
@@ -133,16 +199,60 @@ namespace BiometricSystem.Database
             CreateIndexIfNotExists(connection, "idx_timerecords_employee", "TimeRecords", "EmployeeId");
             CreateIndexIfNotExists(connection, "idx_timerecords_timestamp", "TimeRecords", "Timestamp");
             CreateIndexIfNotExists(connection, "idx_timerecords_synced", "TimeRecords", "SyncedToCloud");
-            
             // Índices para biometrias e pontos
             CreateIndexIfNotExists(connection, "idx_biometrias_cooperado", "Biometrias", "CooperadoId");
             CreateIndexIfNotExists(connection, "idx_biometrias_synced", "Biometrias", "SyncedToNeon");
             CreateIndexIfNotExists(connection, "idx_pontos_cooperado", "Pontos", "CooperadoId");
             CreateIndexIfNotExists(connection, "idx_pontos_timestamp", "Pontos", "Timestamp");
             CreateIndexIfNotExists(connection, "idx_pontos_synced", "Pontos", "SyncedToNeon");
-            
             // Índices para setores
             CreateIndexIfNotExists(connection, "idx_setores_hospital", "Setores", "HospitalId");
+        }
+
+        /// <summary>
+        /// Decide o tipo do próximo ponto (ENTRADA/SAIDA) considerando tolerância e plantão noturno.
+        /// </summary>
+        public string DecidirTipoProximoPonto(string cooperadoId, int toleranciaHorasMin = 14, int toleranciaHorasMax = 16)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+                string query = @"SELECT Tipo, Timestamp FROM Pontos WHERE CooperadoId = @CooperadoId ORDER BY datetime(Timestamp) DESC LIMIT 1";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    string ultimoTipo = reader.GetString(0);
+                    string timestampStr = reader.GetString(1);
+                    DateTimeOffset ultimoRegistro;
+                    // Tenta parsear considerando timezone
+                    if (DateTimeOffset.TryParse(timestampStr, out ultimoRegistro))
+                    {
+                        var agora = DateTimeOffset.Now;
+                        var diffHoras = (agora - ultimoRegistro).TotalHours;
+                        // Se não há registro ou o último é SAIDA, sempre força ENTRADA
+                        if (string.IsNullOrEmpty(ultimoTipo) || ultimoTipo.Equals("SAIDA", StringComparison.OrdinalIgnoreCase))
+                            return "ENTRADA";
+                        // Se o último é ENTRADA
+                        if (ultimoTipo.Equals("ENTRADA", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Se excedeu tolerância, força ENTRADA
+                            if (diffHoras >= toleranciaHorasMin)
+                                return "ENTRADA";
+                            // Caso contrário, alterna normalmente
+                            return "SAIDA";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao decidir tipo do próximo ponto: {ex.Message}");
+            }
+            // Se não encontrou registro, sempre retorna ENTRADA
+            return "ENTRADA";
         }
 
         private void CreateIndexIfNotExists(SQLiteConnection connection, string indexName, string tableName, string columnName)
@@ -485,7 +595,7 @@ namespace BiometricSystem.Database
                 cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
                 cmd.Parameters.AddWithValue("@CooperadoNome", cooperadoNome);
                 cmd.Parameters.AddWithValue("@FingerIndex", 0);
-                cmd.Parameters.AddWithValue("@Hash", hash);
+                cmd.Parameters.AddWithValue("@Hash", hash ?? "");
                 cmd.Parameters.AddWithValue("@Template", template);
                 cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
@@ -496,140 +606,6 @@ namespace BiometricSystem.Database
                 System.Diagnostics.Debug.WriteLine($"Erro ao salvar biometria local: {ex.Message}");
                 return false;
             }
-        }
-
-        public List<(string CooperadoId, string CooperadoNome, byte[] Template)> BuscarBiometriasLocais()
-        {
-            var biometrias = new List<(string CooperadoId, string CooperadoNome, byte[] Template)>();
-
-            try
-            {
-                using var connection = new SQLiteConnection(connectionString);
-                connection.Open();
-
-                string query = "SELECT CooperadoId, CooperadoNome, Template FROM Biometrias ORDER BY CreatedAt DESC LIMIT 500";
-                using var cmd = new SQLiteCommand(query, connection);
-                using var reader = cmd.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    string cooperadoId = reader.GetString(0);
-                    string cooperadoNome = reader.GetString(1);
-                    byte[] template = (byte[])reader[2];
-                    biometrias.Add((cooperadoId, cooperadoNome, template));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro ao buscar biometrias locais: {ex.Message}");
-            }
-
-            return biometrias;
-        }
-
-        // ==================== MÉTODOS PARA PONTOS ====================
-
-        public bool SalvarPontoLocal(
-            string cooperadoId,
-            string cooperadoNome,
-            string tipo,
-            string local,
-            string? hospitalId,
-            int? setorId)
-        {
-            try
-            {
-                using var connection = new SQLiteConnection(connectionString);
-                connection.Open();
-
-                string id = Guid.NewGuid().ToString();
-                string? relatedId = null;
-
-                // Normalizar tipo (web espera ENTRADA/SAIDA em maiúsculas)
-                string tipoNormalizado = tipo.Equals("Saída", StringComparison.OrdinalIgnoreCase) ? "SAIDA" : tipo.Equals("Entrada", StringComparison.OrdinalIgnoreCase) ? "ENTRADA" : tipo.ToUpperInvariant();
-
-                // Reutilizar código e vincular saída à última entrada
-                var entradaAnterior = ObterUltimaEntrada(cooperadoId);
-                string codigo;
-                if (tipoNormalizado == "SAIDA" && entradaAnterior != null)
-                {
-                    codigo = entradaAnterior.Value.Codigo;
-                    relatedId = entradaAnterior.Value.Id;
-                }
-                else
-                {
-                    codigo = Guid.NewGuid().ToString();
-                }
-
-                var agora = DateTime.Now;
-                string timestampIso = agora.ToString("yyyy-MM-ddTHH:mm:sszzz");
-                string data = agora.ToString("yyyy-MM-dd");
-                string hora = agora.ToString("HH:mm");
-                string? entrada = tipoNormalizado == "ENTRADA" ? hora : null;
-                string? saida = tipoNormalizado == "SAIDA" ? hora : null;
-                string status = tipoNormalizado == "ENTRADA" ? "Aberto" : "Fechado";
-
-                string query = @"INSERT INTO Pontos (
-                                    Id, Codigo, CooperadoId, CooperadoNome, Timestamp, Tipo, Local,
-                                    HospitalId, SetorId, Status, IsManual, RelatedId, Date, Entrada, Saida,
-                                    Observacao, BiometriaEntradaHash, BiometriaSaidaHash, SyncedToNeon)
-                                VALUES (
-                                    @Id, @Codigo, @CooperadoId, @CooperadoNome, @Timestamp, @Tipo, @Local,
-                                    @HospitalId, @SetorId, @Status, @IsManual, @RelatedId, @Date, @Entrada, @Saida,
-                                    @Observacao, @BiometriaEntradaHash, @BiometriaSaidaHash, 0)";
-
-                using var cmd = new SQLiteCommand(query, connection);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@Codigo", codigo);
-                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
-                cmd.Parameters.AddWithValue("@CooperadoNome", cooperadoNome);
-                cmd.Parameters.AddWithValue("@Timestamp", timestampIso);
-                cmd.Parameters.AddWithValue("@Tipo", tipoNormalizado);
-                cmd.Parameters.AddWithValue("@Local", local ?? "");
-                cmd.Parameters.AddWithValue("@HospitalId", hospitalId ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@SetorId", setorId ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Status", status);
-                cmd.Parameters.AddWithValue("@IsManual", 0); // ponto biométrico
-                cmd.Parameters.AddWithValue("@RelatedId", relatedId ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Date", data);
-                cmd.Parameters.AddWithValue("@Entrada", entrada ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Saida", saida ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Observacao", (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@BiometriaEntradaHash", (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@BiometriaSaidaHash", (object)DBNull.Value);
-
-                return cmd.ExecuteNonQuery() > 0;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro ao salvar ponto local: {ex.Message}");
-                return false;
-            }
-        }
-
-        public string? GetUltimoPontoTipo(string cooperadoId)
-        {
-            try
-            {
-                using var connection = new SQLiteConnection(connectionString);
-                connection.Open();
-
-                string query = "SELECT Tipo FROM Pontos WHERE CooperadoId = @CooperadoId ORDER BY Timestamp DESC LIMIT 1";
-                using var cmd = new SQLiteCommand(query, connection);
-                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
-                using var reader = cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    return reader.GetString(0);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro ao buscar último ponto: {ex.Message}");
-            }
-
-            return null;
         }
 
         public bool TemRegistroRecente(string cooperadoId, int segundosMinimos = 30)

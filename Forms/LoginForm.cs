@@ -447,26 +447,13 @@ namespace BiometricSystem.Forms
                 if (matchedCooperadoId != null)
                 {
                     LogToFile($"✅ Digital identificada: {matchedCooperadoNome}");
-                    
-                    // Buscar o ÚLTIMO tipo de ponto registrado localmente
-                    var ultimoTipo = database.GetUltimoPontoTipo(matchedCooperadoId);
-                    
-                    // O banco salva como "ENTRADA" ou "SAIDA" (maiúsculas sem acento)
-                    // Determinar o próximo tipo baseado no último
-                    string tipoRegistro;
-                    if (string.IsNullOrEmpty(ultimoTipo) || ultimoTipo.Equals("SAIDA", StringComparison.OrdinalIgnoreCase))
-                    {
-                        tipoRegistro = "ENTRADA";  // Se não há registro ou último foi saída, registrar entrada
-                    }
-                    else
-                    {
-                        tipoRegistro = "SAIDA";    // Se último foi entrada, registrar saída
-                    }
 
-                    LogToFile($"   Tipo de registro: {tipoRegistro} (último registro foi: {ultimoTipo ?? "nenhum"})");
+                    // Decidir o tipo do próximo ponto com base na tolerância e plantão noturno
+                    string tipoRegistro = database.DecidirTipoProximoPonto(matchedCooperadoId, 14, 16);
+                    LogToFile($"   Tipo de registro: {tipoRegistro} (lógica tolerância/plantão)");
 
                     // Formatar local como no sistema web: "CODIGO_HOSPITAL - SETOR"
-                    string localFormatado = string.IsNullOrEmpty(hospitalCodigo) 
+                    string localFormatado = string.IsNullOrEmpty(hospitalCodigo)
                         ? (selectedSetor ?? "N/A")
                         : $"{hospitalCodigo} - {selectedSetor ?? "N/A"}";
 
