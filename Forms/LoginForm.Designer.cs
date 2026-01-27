@@ -47,6 +47,7 @@ namespace BiometricSystem.Forms
             this.lblFingerprint = new System.Windows.Forms.Label();
             
             this.lblModoSimulacao = new System.Windows.Forms.Label();
+            this.panelStatusBar = new System.Windows.Forms.Panel();
             this.lblStatus = new System.Windows.Forms.Label();
             
             this.timerClock = new System.Windows.Forms.Timer(this.components);
@@ -66,6 +67,7 @@ namespace BiometricSystem.Forms
             this.panelHeader.Size = new System.Drawing.Size(780, 140);
             this.panelHeader.TabIndex = 0;
             this.panelHeader.BackColor = System.Drawing.Color.FromArgb(16, 118, 128);
+            this.panelHeader.Anchor = System.Windows.Forms.AnchorStyles.Top;
             
             // lblTime
             this.lblTime.Dock = System.Windows.Forms.DockStyle.Top;
@@ -88,6 +90,7 @@ namespace BiometricSystem.Forms
             this.lblDate.TabIndex = 1;
             this.lblDate.Text = "segunda-feira, 12 de janeiro de 2026";
             this.lblDate.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblDate.Anchor = ((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right);
             
             // lblLocalProducao
             this.lblLocalProducao.AutoSize = true;
@@ -98,6 +101,7 @@ namespace BiometricSystem.Forms
             this.lblLocalProducao.Size = new System.Drawing.Size(180, 25);
             this.lblLocalProducao.TabIndex = 2;
             this.lblLocalProducao.Text = "📍 Local de Produção";
+            this.lblLocalProducao.Anchor = System.Windows.Forms.AnchorStyles.Top;
             
             // lblSetorAla
             this.lblSetorAla.AutoSize = true;
@@ -108,6 +112,7 @@ namespace BiometricSystem.Forms
             this.lblSetorAla.Size = new System.Drawing.Size(90, 19);
             this.lblSetorAla.TabIndex = 3;
             this.lblSetorAla.Text = "🏢 SETOR / ALA";
+            this.lblSetorAla.Anchor = System.Windows.Forms.AnchorStyles.Top;
             
             // cmbSetor
             this.cmbSetor.BackColor = System.Drawing.Color.White;
@@ -119,17 +124,18 @@ namespace BiometricSystem.Forms
             this.cmbSetor.Name = "cmbSetor";
             this.cmbSetor.Size = new System.Drawing.Size(700, 29);
             this.cmbSetor.TabIndex = 4;
+            this.cmbSetor.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.cmbSetor.SelectedIndexChanged += new System.EventHandler(this.cmbSetor_SelectedIndexChanged);
             
             // panelSimulador
             this.panelSimulador.BackColor = System.Drawing.Color.White;
             this.panelSimulador.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.panelSimulador.Controls.Add(this.lblSimulador);
-            // Descer mais o painel simulador
-            this.panelSimulador.Location = new System.Drawing.Point(140, 360);
+            this.panelSimulador.Location = new System.Drawing.Point(140, 320);
             this.panelSimulador.Name = "panelSimulador";
             this.panelSimulador.Size = new System.Drawing.Size(620, 250);
             this.panelSimulador.TabIndex = 5;
+            this.panelSimulador.Anchor = System.Windows.Forms.AnchorStyles.Top;
             
             // lblInstrucao
             this.lblInstrucao.AutoSize = false;
@@ -141,6 +147,7 @@ namespace BiometricSystem.Forms
             this.lblInstrucao.TabIndex = 8;
             this.lblInstrucao.Text = "Para registrar o plantão, selecione o setor e pressione a digital";
             this.lblInstrucao.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblInstrucao.Anchor = System.Windows.Forms.AnchorStyles.Top;
             
             // lblSimulador
             this.lblSimulador.BackColor = System.Drawing.Color.Transparent;
@@ -204,18 +211,25 @@ namespace BiometricSystem.Forms
             this.lblModoSimulacao.Visible = false;
             
             // lblStatus
+            // panelStatusBar
+            this.panelStatusBar.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelStatusBar.BackColor = System.Drawing.Color.White;
+            this.panelStatusBar.Size = new System.Drawing.Size(900, 40);
+            this.panelStatusBar.Name = "panelStatusBar";
+            this.panelStatusBar.TabIndex = 100;
+            this.panelStatusBar.Controls.Add(this.lblStatus);
+
+            // lblStatus
             this.lblStatus.BackColor = System.Drawing.Color.White;
             this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.lblStatus.ForeColor = System.Drawing.Color.Gray;
-            // Posiciona a caixa mais abaixo da caixa de cima (panelSimulador)
-            this.lblStatus.Location = new System.Drawing.Point(140, 630); // Descer mais
+            this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatus.Name = "lblStatus";
-            // Mesma largura da caixa de cima (panelSimulador)
-            this.lblStatus.Size = new System.Drawing.Size(620, 40); // Largura igual ao panelSimulador
+            this.lblStatus.Size = new System.Drawing.Size(900, 40);
             this.lblStatus.TabIndex = 6;
             this.lblStatus.Text = "Selecione o setor para ativar o leitor";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lblStatus.Padding = new System.Windows.Forms.Padding(0, 8, 0, 8); // Espaço interno
+            this.lblStatus.Padding = new System.Windows.Forms.Padding(0, 8, 0, 8);
             this.lblStatus.BorderStyle = System.Windows.Forms.BorderStyle.None;
             // Bordas arredondadas
             this.lblStatus.Paint += (s, e) => {
@@ -239,18 +253,23 @@ namespace BiometricSystem.Forms
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(240, 242, 245);
             this.ClientSize = new System.Drawing.Size(900, 680);
-            this.Controls.Add(this.lblStatus);
+            this.Padding = new System.Windows.Forms.Padding(0, 0, 0, 0); // Espaço inferior removido, pois o painel já ocupa
             this.Controls.Add(this.panelSimulador);
             this.Controls.Add(this.lblInstrucao);
             this.Controls.Add(this.cmbSetor);
             this.Controls.Add(this.lblSetorAla);
             this.Controls.Add(this.lblLocalProducao);
             this.Controls.Add(this.panelHeader);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-            this.MaximizeBox = true;
+            this.Controls.Add(this.panelStatusBar); // Adiciona a barra de status dockada embaixo
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "LoginForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+                        this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Sistema Biométrico - Registro de Ponto";
             this.Resize += new System.EventHandler(this.LoginForm_Resize);
             
@@ -273,6 +292,7 @@ namespace BiometricSystem.Forms
         private System.Windows.Forms.Panel panelFingerprint;
         private System.Windows.Forms.Label lblFingerprint;
         private System.Windows.Forms.Label lblModoSimulacao;
+        private System.Windows.Forms.Panel panelStatusBar;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Timer timerClock;
     }

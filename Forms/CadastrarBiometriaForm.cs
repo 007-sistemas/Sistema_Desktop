@@ -40,10 +40,10 @@ namespace BiometricSystem.Forms
         {
             _connectionString = connectionString;
             _fingerprintService = new FingerprintService();
-            
+
             // Inicializar neonHelper no construtor
             _neonCooperadoHelper = new NeonCooperadoHelper(connectionString);
-            
+
             // Configurar eventos do serviço biométrico
             _fingerprintService.OnFingerprintCaptured += OnFingerprintCaptured;
             _fingerprintService.OnStatusChanged += (sender, status) =>
@@ -57,10 +57,13 @@ namespace BiometricSystem.Forms
                     labelStatus.Text = status;
                 }
             };
-            
+
             InitializeComponent();
             InitializeControls();
-            
+
+            // Sempre em primeiro plano
+            this.TopMost = true;
+
             // Inicializar leitor em segundo plano
             Task.Run(() =>
             {

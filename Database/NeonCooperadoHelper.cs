@@ -11,8 +11,42 @@ namespace BiometricSystem.Database
     /// Helper para consultar cooperados da tabela 'cooperados' do Neon
     /// Com Connection Pooling para evitar limite de conexões
     /// </summary>
-    public class NeonCooperadoHelper
-    {
+        public class NeonCooperadoHelper
+        {
+            /// <summary>
+            /// Valida usuário e senha na tabela managers (autenticação administrativa)
+            /// </summary>
+            public async Task<bool> ValidarManagerAsync(string username, string password)
+            {
+                NpgsqlConnection? connection = null;
+                try
+                {
+                    connection = new NpgsqlConnection(_pooledConnectionString);
+                    await connection.OpenAsync();
+                    string query = @"SELECT COUNT(*) FROM managers WHERE username = @username AND password = @password";
+                    using var cmd = new NpgsqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@password", password);
+                    var result = await cmd.ExecuteScalarAsync();
+                    if (result != null && int.TryParse(result.ToString(), out int count))
+                    {
+                        return count > 0;
+                    }
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Log($"❌ Erro ao validar manager: {ex.Message}");
+                    return false;
+                }
+                finally
+                {
+                    if (connection != null)
+                    {
+                        try { connection.Close(); connection.Dispose(); } catch { }
+                    }
+                }
+            }
         private readonly string _connectionString;
         private static string LogPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric_log.txt");
         

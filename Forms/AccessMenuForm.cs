@@ -37,9 +37,10 @@ namespace BiometricSystem.Forms
                 if (parentForm != null)
                 {
                     parentForm.AllowClose = true;
+                    // Sinalizar para o LoginForm que deve fechar
+                    parentForm.Close();
                 }
-                // Fechar o sistema completamente
-                Application.Exit();
+                // Não chama Application.Exit() aqui!
             }
         }
 
@@ -47,7 +48,14 @@ namespace BiometricSystem.Forms
         {
             // Marca que quer voltar para produção
             voltarParaProducao = true;
-            // Fecha esta tela e volta para a tela de produção (LoginForm)
+            if (parentForm != null)
+            {
+                parentForm.AllowClose = false;
+                parentForm.VoltarDaProducao = true;
+                parentForm.WindowState = FormWindowState.Maximized;
+                parentForm.Show();
+                parentForm.TopMost = true;
+            }
             this.Close();
         }
 

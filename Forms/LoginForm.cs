@@ -1,3 +1,5 @@
+
+
 using BiometricSystem.Database;
 using BiometricSystem.Models;
 using BiometricSystem.Services;
@@ -8,8 +10,21 @@ using Microsoft.Extensions.Configuration;
 
 namespace BiometricSystem.Forms
 {
-    public partial class LoginForm : Form
-    {
+        public partial class LoginForm : Form
+        {
+            // Constantes para bloquear movimentação
+            private const int WM_NCLBUTTONDOWN = 0xA1;
+            private const int HTCAPTION = 0x2;
+        // Guardar tamanhos originais para restaurar
+        private float fonteOriginalHeader;
+        private float fonteOriginalData;
+        private float fonteOriginalTitulo;
+        private float fonteOriginalInstrucao;
+        private float fonteOriginalStatus;
+        private Size tamanhoOriginalPanelHeader;
+        private Size tamanhoOriginalPanelSimulador;
+        private Size tamanhoOriginalPanelStatusBar;
+
         private readonly FingerprintService fingerprintService;
         private readonly DatabaseHelper database;
         private readonly SyncService? syncService;
@@ -18,6 +33,7 @@ namespace BiometricSystem.Forms
         private string? selectedSetor;
         private int? selectedSetorId;
         private bool isCapturing = false;
+        public bool VoltarDaProducao { get; set; } = false;
         private string? hospitalId;
         private string? hospitalNome;
         private string? hospitalCodigo;
@@ -27,6 +43,28 @@ namespace BiometricSystem.Forms
         public LoginForm(IConfiguration? config = null)
         {
             InitializeComponent();
+            // NÃO forçar FormBorderStyle=None aqui, para permitir o X
+            this.StartPosition = FormStartPosition.Manual;
+            this.Bounds = Screen.FromHandle(this.Handle).Bounds;
+            this.TopMost = true;
+            // Impede redimensionamento e mantém o X
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            // Salvar tamanhos e fontes originais após InitializeComponent
+            fonteOriginalHeader = lblTime.Font.Size;
+            fonteOriginalData = lblDate.Font.Size;
+            fonteOriginalTitulo = lblLocalProducao.Font.Size;
+            fonteOriginalInstrucao = lblInstrucao.Font.Size;
+            fonteOriginalStatus = lblStatus.Font.Size;
+            tamanhoOriginalPanelHeader = panelHeader.Size;
+            tamanhoOriginalPanelSimulador = panelSimulador.Size;
+            tamanhoOriginalPanelStatusBar = panelStatusBar.Size;
+
+            // Adaptação dinâmica para telas pequenas
+            this.Resize += (s, e) => AdaptarParaTelaPequena();
+            AdaptarParaTelaPequena();
+
             fingerprintService = new FingerprintService();
             database = new DatabaseHelper();
             
@@ -125,6 +163,46 @@ namespace BiometricSystem.Forms
             
             // Aplicar bordas arredondadas
             AplicarBordasArredondadas();
+        }
+
+        // Método para adaptar dinamicamente para telas pequenas
+        private void AdaptarParaTelaPequena()
+        {
+            // Sempre adapta para a área útil da tela
+            // Defina o limite de altura considerado "pequeno"
+            int limiteAltura = 700;
+            bool telaPequena = this.Height < limiteAltura;
+
+            if (telaPequena)
+            {
+                // Reduzir fontes
+                panelHeader.Font = new Font("Segoe UI", fonteOriginalHeader * 0.7f, FontStyle.Bold);
+                lblTime.Font = new Font("Segoe UI", fonteOriginalHeader * 0.7f, FontStyle.Bold);
+                lblDate.Font = new Font("Segoe UI", fonteOriginalData * 0.8f);
+                lblLocalProducao.Font = new Font("Segoe UI", fonteOriginalTitulo * 0.9f, FontStyle.Bold);
+                lblInstrucao.Font = new Font("Segoe UI", fonteOriginalInstrucao * 0.9f, FontStyle.Bold);
+                lblStatus.Font = new Font("Segoe UI", fonteOriginalStatus * 0.9f);
+
+                // Reduzir painéis
+                panelHeader.Size = new Size(tamanhoOriginalPanelHeader.Width, (int)(tamanhoOriginalPanelHeader.Height * 0.7));
+                panelSimulador.Size = new Size(tamanhoOriginalPanelSimulador.Width, (int)(tamanhoOriginalPanelSimulador.Height * 0.7));
+                panelStatusBar.Size = new Size(tamanhoOriginalPanelStatusBar.Width, (int)(tamanhoOriginalPanelStatusBar.Height * 0.7));
+            }
+            else
+            {
+                // Restaurar fontes
+                panelHeader.Font = new Font("Segoe UI", fonteOriginalHeader, FontStyle.Bold);
+                lblTime.Font = new Font("Segoe UI", fonteOriginalHeader, FontStyle.Bold);
+                lblDate.Font = new Font("Segoe UI", fonteOriginalData);
+                lblLocalProducao.Font = new Font("Segoe UI", fonteOriginalTitulo, FontStyle.Bold);
+                lblInstrucao.Font = new Font("Segoe UI", fonteOriginalInstrucao, FontStyle.Bold);
+                lblStatus.Font = new Font("Segoe UI", fonteOriginalStatus);
+
+                // Restaurar painéis
+                panelHeader.Size = tamanhoOriginalPanelHeader;
+                panelSimulador.Size = tamanhoOriginalPanelSimulador;
+                panelStatusBar.Size = tamanhoOriginalPanelStatusBar;
+            }
         }
 
         private void AplicarBordasArredondadas()
@@ -326,9 +404,7 @@ namespace BiometricSystem.Forms
             // Centralizar painel simulador
             panelSimulador.Left = centerX - (panelSimulador.Width / 2);
             
-            // Centralizar status
-            lblStatus.Left = centerX - 350;
-            lblStatus.Width = 700;
+            // Não centralizar manualmente a barra de status, pois ela está dockada
         }
 
         private void LoginForm_Resize(object sender, EventArgs e)
@@ -469,7 +545,32 @@ namespace BiometricSystem.Forms
                                 lblSimulador.ForeColor = System.Drawing.Color.FromArgb(180, 120, 0); // Amarelo escuro
                                 lblSimulador.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
                                 lblStatus.Text = $"⚠️ ENTRADA recente - {matchedCooperadoNome}";
+
+                                // Garantir que o timer não tenha múltiplos handlers
+                                if (clearPanelTimer != null)
+                                {
+                                    clearPanelTimer.Stop();
+                                    clearPanelTimer.Tick -= ClearPanelTimer_Tick;
+                                }
+                                clearPanelTimer.Interval = 5000; // 5 segundos
+                                clearPanelTimer.Tick += ClearPanelTimer_Tick;
+                                clearPanelTimer.Start();
                                 return;
+
+// Handler dedicado para limpar o painel
+void ClearPanelTimer_Tick(object? sender, EventArgs e)
+{
+    if (clearPanelTimer != null)
+    {
+        clearPanelTimer.Stop();
+        clearPanelTimer.Tick -= ClearPanelTimer_Tick;
+    }
+    panelSimulador.BackColor = System.Drawing.Color.White;
+    lblSimulador.Text = "";
+    lblSimulador.Font = new System.Drawing.Font("Segoe UI", 12F);
+    lblSimulador.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+    lblStatus.Text = "Selecione o setor para ativar o leitor";
+}
                             }
                         }
                     }
@@ -770,49 +871,69 @@ namespace BiometricSystem.Forms
             }
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        protected override async void OnFormClosing(FormClosingEventArgs e)
         {
-            // Se AllowClose for true, permite fechar sem abrir menu
+
+            // Se for retorno do menu de produção, só trava/maximiza e não pede autenticação
+            if (VoltarDaProducao)
+            {
+                VoltarDaProducao = false;
+                this.WindowState = FormWindowState.Maximized;
+                this.TopMost = true;
+                e.Cancel = true;
+                // Aqui pode travar a tela se necessário
+                return;
+            }
+
+            // Se AllowClose for true, permite fechar sem autenticação
             if (AllowClose)
             {
-                // Limpar timer se estiver ativo
                 if (clearPanelTimer != null)
                 {
                     clearPanelTimer.Stop();
                     clearPanelTimer.Dispose();
                     clearPanelTimer = null;
                 }
-                
                 syncService?.StopAutoSync();
                 fingerprintService.Dispose();
                 base.OnFormClosing(e);
                 return;
             }
-            
-            // Cancelar o fechamento e mostrar tela de acesso
+
+            // Prompt de autenticação administrativa
             e.Cancel = true;
-            
-            // Limpar timer se estiver ativo
-            if (clearPanelTimer != null)
+            var authDialog = new AuthDialogForm(async (user, pass) => neonHelper != null && await neonHelper.ValidarManagerAsync(user, pass));
+            authDialog.TopMost = true;
+            authDialog.BringToFront();
+            this.TopMost = false; // Garante que o dialog fique acima
+            authDialog.FormClosed += (s, args) =>
             {
-                clearPanelTimer.Stop();
-                clearPanelTimer.Dispose();
-                clearPanelTimer = null;
-            }
-            
-            syncService?.StopAutoSync();
-            
-            // Abrir tela de acesso
-            try
-            {
-                var accessForm = new AccessMenuForm(this);
-                accessForm.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erro ao abrir tela de acesso: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+                this.TopMost = true; // Restaura prioridade
+                if (authDialog.AuthSuccess)
+                {
+                    var menu = new AccessMenuForm(this);
+                    menu.TopMost = true;
+                    menu.Show();
+                    this.Hide();
+                    menu.FormClosed += (ms, ma) => {
+                        Application.Exit();
+                    };
+                }
+                // Se não autenticou, volta para tela de produção (LoginForm permanece visível)
+            };
+            authDialog.Show();
         }
-    }
+
+        // Impede movimentação da janela
+        protected override void WndProc(ref Message m)
+        {
+		if (m.Msg == WM_NCLBUTTONDOWN && m.WParam.ToInt32() == HTCAPTION)
+		{
+			// Bloqueia o arrastar da janela
+			return;
+		}
+		base.WndProc(ref m);
+	}
+}
 }
 

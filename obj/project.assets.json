@@ -5439,19 +5439,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\PcGabriel\\.nuget\\packages\\": {}
+    "C:\\Users\\Gabriel Gomes\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\PcGabriel\\Downloads\\Sistema Desktop\\BiometricSystem.csproj",
+      "projectUniqueName": "C:\\Users\\Gabriel Gomes\\Documents\\Sistema Desktop\\BiometricSystem.csproj",
       "projectName": "BiometricSystem",
-      "projectPath": "C:\\Users\\PcGabriel\\Downloads\\Sistema Desktop\\BiometricSystem.csproj",
-      "packagesPath": "C:\\Users\\PcGabriel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\PcGabriel\\Downloads\\Sistema Desktop\\obj\\",
+      "projectPath": "C:\\Users\\Gabriel Gomes\\Documents\\Sistema Desktop\\BiometricSystem.csproj",
+      "packagesPath": "C:\\Users\\Gabriel Gomes\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Gabriel Gomes\\Documents\\Sistema Desktop\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\PcGabriel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\Gabriel Gomes\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0-windows"
@@ -5469,11 +5469,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -5524,7 +5519,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.416/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
