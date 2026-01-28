@@ -75,52 +75,88 @@ namespace BiometricSystem.Database
 
         public DatabaseHelper()
         {
-            string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric.db");
+            // Inicialização segura do caminho do banco SQLite
+            string? appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (string.IsNullOrEmpty(appDataRoot))
+                appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(appDataRoot))
+                appDataRoot = @"C:\\Temp";
+
+            // Fallback absoluto se ainda assim vier nulo ou vazio
+            if (string.IsNullOrEmpty(appDataRoot))
+                appDataRoot = @"C:\\Temp";
+
+            string appDataDir = !string.IsNullOrEmpty(appDataRoot) ? Path.Combine(appDataRoot, "BiometricSystem") : @"C:\\Temp\\BiometricSystem";
+            Directory.CreateDirectory(appDataDir);
+
+            string dbPath = !string.IsNullOrEmpty(appDataDir) ? Path.Combine(appDataDir, "biometric.db") : @"C:\\Temp\\BiometricSystem\\biometric.db";
+            string logFile = !string.IsNullOrEmpty(appDataDir) ? Path.Combine(appDataDir, "biometric_path_log.txt") : @"C:\\Temp\\BiometricSystem\\biometric_path_log.txt";
+
+            void LogPath(string label, string? value)
+            {
+                try
+                {
+                    File.AppendAllText(logFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {label}: {value ?? "<null>"}\n");
+                }
+                catch { }
+            }
+
+            LogPath("APPDATA", appDataRoot);
+            LogPath("appDataDir", appDataDir);
+            LogPath("dbPath", dbPath);
+
+            if (string.IsNullOrEmpty(dbPath))
+            {
+                LogPath("ERRO FATAL", "dbPath está nulo ou vazio! Encerrando aplicação.");
+                System.Windows.Forms.MessageBox.Show("Erro crítico ao determinar o caminho do banco de dados. Encerrando aplicação.", "Erro", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                Environment.Exit(1);
+            }
+
             connectionString = $"Data Source={dbPath};Version=3;";
+            LogPath("connectionString", connectionString);
+
             InitializeDatabase();
         }
-
-        private void InitializeDatabase()
-        {
-            using var connection = new SQLiteConnection(connectionString);
+                    {
+                        // Inicialização segura do caminho do banco SQLite
+                        string? appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                        if (string.IsNullOrEmpty(appDataRoot))
+                            appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrEmpty(appDataRoot))
             connection.Open();
 
-            // Tabela de Funcionários com campos de sincronização
-            string createEmployeesTable = @"
-                CREATE TABLE IF NOT EXISTS Employees (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
-                    CPF TEXT UNIQUE NOT NULL,
-                    Email TEXT,
-                    Position TEXT,
-                    FingerprintTemplate BLOB NOT NULL,
-                    CreatedAt TEXT NOT NULL,
-                    IsActive INTEGER NOT NULL DEFAULT 1,
-                    SyncedToCloud INTEGER NOT NULL DEFAULT 0,
-                    LastSyncTime TEXT,
-                    CloudId TEXT
-                )";
+                        string appDataDir = !string.IsNullOrEmpty(appDataRoot) ? Path.Combine(appDataRoot, "BiometricSystem") : @"C:\\Temp\\BiometricSystem";
+                        Directory.CreateDirectory(appDataDir);
 
-            // Tabela de Registros de Ponto com campos de sincronização
-            string createTimeRecordsTable = @"
-                CREATE TABLE IF NOT EXISTS TimeRecords (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    EmployeeId INTEGER NOT NULL,
-                    Timestamp TEXT NOT NULL,
-                    Type TEXT NOT NULL,
-                    Notes TEXT,
-                    SyncedToCloud INTEGER NOT NULL DEFAULT 0,
-                    LastSyncTime TEXT,
-                    CloudId TEXT,
-                    FOREIGN KEY (EmployeeId) REFERENCES Employees(Id)
-                )";
+                        string dbPath = !string.IsNullOrEmpty(appDataDir) ? Path.Combine(appDataDir, "biometric.db") : @"C:\\Temp\\BiometricSystem\\biometric.db";
+                        string logFile = !string.IsNullOrEmpty(appDataDir) ? Path.Combine(appDataDir, "biometric_path_log.txt") : @"C:\\Temp\\BiometricSystem\\biometric_path_log.txt";
 
-            // Tabela de Biometrias do NEON (sincronização local)
-            string createBiometriasTable = @"
-                CREATE TABLE IF NOT EXISTS Biometrias (
-                    Id TEXT PRIMARY KEY,
-                    CooperadoId TEXT NOT NULL,
-                    CooperadoNome TEXT NOT NULL,
+                        void LogPath(string label, string? value)
+                        {
+                            try
+                            {
+                                File.AppendAllText(logFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {label}: {value ?? "<null>"}\n");
+                            }
+                            catch { }
+                        }
+
+                        LogPath("APPDATA", appDataRoot);
+                        LogPath("appDataDir", appDataDir);
+                        LogPath("dbPath", dbPath);
+
+                        if (string.IsNullOrEmpty(dbPath))
+                        {
+                            LogPath("ERRO FATAL", "dbPath está nulo ou vazio! Encerrando aplicação.");
+                            System.Windows.Forms.MessageBox.Show("Erro crítico ao determinar o caminho do banco de dados. Encerrando aplicação.", "Erro", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                            Environment.Exit(1);
+                        }
+
+                        connectionString = $"Data Source={dbPath};Version=3;";
+                        LogPath("connectionString", connectionString);
+
+                        InitializeDatabase();
+                    }
                     FingerIndex INTEGER NOT NULL,
                     Hash TEXT,
                     Template BLOB NOT NULL,

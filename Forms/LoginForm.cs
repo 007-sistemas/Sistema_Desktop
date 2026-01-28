@@ -641,7 +641,11 @@ void ClearPanelTimer_Tick(object? sender, EventArgs e)
         {
             try
             {
-                string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric_log.txt");
+                string logRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) ?? "C:\\Temp";
+                if (string.IsNullOrEmpty(logRoot)) logRoot = "C:\\Temp";
+                string logDir = System.IO.Path.Combine(logRoot, "BiometricSystem");
+                System.IO.Directory.CreateDirectory(logDir);
+                string logPath = System.IO.Path.Combine(logDir, "biometric_log.txt");
                 string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
                 File.AppendAllText(logPath, logMessage + Environment.NewLine);
                 System.Diagnostics.Debug.WriteLine(logMessage);

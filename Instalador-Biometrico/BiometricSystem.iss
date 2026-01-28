@@ -9,8 +9,17 @@ Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 
+<<<<<<< HEAD
 [Files]
 Source: "..\bin\Release\net8.0-windows\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+=======
+
+[Files]
+; ATENÇÃO: Use a pasta win-x64 (NÃO a publish) para garantir que o instalador replique o ambiente funcional.
+; NÃO inclua o arquivo biometric.db para que o sistema crie um banco limpo na primeira execução.
+Source: "..\bin\Release\net8.0-windows\win-x64\*"; Excludes: "biometric.db,*.sqlite,*.sqlite3"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\bin\Release\net8.0-windows\win-x64\biometric - Limpo.db"; DestDir: "{app}"; DestName: "biometric.db"; Flags: ignoreversion
+>>>>>>> baa86cf (Atualização do sistema: build limpo, banco limpo, config de publish e instalador ajustados)
 
 [Icons]
 Name: "{group}\BiometricSystem"; Filename: "{app}\BiometricSystem.exe"
@@ -21,6 +30,7 @@ Name: "desktopicon"; Description: "Criar atalho na Área de Trabalho"; GroupDesc
 
 [Run]
 Filename: "{app}\BiometricSystem.exe"; Description: "Executar BiometricSystem"; Flags: nowait postinstall skipifsilent
+<<<<<<< HEAD
 
 [Code]
 // Verifica se o .NET 8 Runtime está instalado
@@ -69,7 +79,12 @@ var
   ResultCode: Integer;
 
 procedure CurStepChanged(CurStep: TSetupStep);
-begin
+    ; ATENÇÃO: Use a pasta win-x64 (NÃO a publish) para garantir que o instalador replique o ambiente funcional.
+    ; NÃO inclua o arquivo biometric.db para que o sistema crie um banco limpo na primeira execução.
+    Source: "..\bin\Release\net8.0-windows\win-x64\*"; Excludes: "biometric.db,*.sqlite,*.sqlite3"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+    Source: "..\bin\Release\net8.0-windows\win-x64\biometric - Limpo.db"; DestDir: "{app}"; DestName: "biometric.db"; Flags: ignoreversion
   if CurStep = ssPostInstall then
     ShellExec('', 'icacls', ExpandConstant('{app}') + ' /grant *S-1-1-0:(OI)(CI)F /T', '', SW_HIDE, ResultCode);
 end;
+=======
+>>>>>>> baa86cf (Atualização do sistema: build limpo, banco limpo, config de publish e instalador ajustados)

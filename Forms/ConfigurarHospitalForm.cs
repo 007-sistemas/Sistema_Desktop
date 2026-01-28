@@ -202,7 +202,29 @@ namespace BiometricSystem.Forms
 
         private void SalvarConfiguracao(NeonCooperadoHelper.Hospital hospital)
         {
-            string appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
+            // Caminho seguro para configuração do usuário
+            string? appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (string.IsNullOrEmpty(appDataRoot))
+            {
+                MessageBox.Show(
+                    "Não foi possível localizar a pasta de dados do usuário (APPDATA). Entre em contato com o suporte.",
+                    "Erro de Inicialização",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+                throw new InvalidOperationException("APPDATA não encontrado");
+            }
+            string appDataDir = Path.Combine(appDataRoot, "BiometricSystem");
+            Directory.CreateDirectory(appDataDir);
+            string appSettingsPath = Path.Combine(appDataDir, "appsettings.json");
+
+            // Se não existir, copiar o padrão da pasta do app
+            if (!File.Exists(appSettingsPath))
+            {
+                string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? "C:\\Temp", "appsettings.json");
+                if (File.Exists(defaultPath))
+                    File.Copy(defaultPath, appSettingsPath, true);
+            }
 
             // Ler o arquivo atual
             string json = File.ReadAllText(appSettingsPath);

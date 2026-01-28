@@ -11,10 +11,20 @@ namespace BiometricSystem
             try
             {
                 ApplicationConfiguration.Initialize();
-                
+
+                // Caminho seguro para configuração do usuário
+                string? appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                if (string.IsNullOrEmpty(appDataRoot))
+                    appDataRoot = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (string.IsNullOrEmpty(appDataRoot))
+                    appDataRoot = "C:\\Temp";
+                string appDataDir = Path.Combine(appDataRoot, "BiometricSystem");
+                Directory.CreateDirectory(appDataDir);
+                string appSettingsPath = Path.Combine(appDataDir, "appsettings.json");
+
                 // Carregar configurações do appsettings.json
                 var config = new ConfigurationBuilder()
-                    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                    .SetBasePath(appDataDir)
                     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                     .Build();
 
@@ -23,9 +33,9 @@ namespace BiometricSystem
                 if (string.IsNullOrEmpty(hospitalId))
                 {
                     // Tentar mostrar tela de configuração de hospital
-                    var neonConnectionString = config.GetConnectionString("DefaultConnection") 
+                    var neonConnectionString = config.GetConnectionString("DefaultConnection")
                         ?? config["Neon:ConnectionString"];
-                    
+
                     try
                     {
                         using (var configForm = new ConfigurarHospitalForm(neonConnectionString!))
@@ -36,10 +46,10 @@ namespace BiometricSystem
                                 return;
                             }
                         }
-                        
+
                         // Recarregar configuração após salvar
                         config = new ConfigurationBuilder()
-                            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                            .SetBasePath(appDataDir)
                             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                             .Build();
                     }
@@ -54,13 +64,16 @@ namespace BiometricSystem
                             MessageBoxButtons.YesNo,
                             MessageBoxIcon.Warning
                         );
-                        
+
                         if (result != DialogResult.Yes)
                         {
                             return;
                         }
                     }
                 }
+
+                // Inicializa o banco SQLite no LocalApplicationData e aplica migrations
+                DatabaseInitialize();
 
                 // Passar configuração para a form
                 Application.Run(new LoginForm(config));
@@ -75,6 +88,15 @@ namespace BiometricSystem
                 );
             }
         }
+<<<<<<< HEAD
+=======
+
+        static void DatabaseInitialize()
+        {
+            using var context = new BiometricSystem.Database.AppDbContext();
+            context.Database.Migrate();
+        }
+>>>>>>> baa86cf (Atualização do sistema: build limpo, banco limpo, config de publish e instalador ajustados)
     }
 }
 

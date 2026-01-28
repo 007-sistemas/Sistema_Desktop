@@ -48,7 +48,17 @@ namespace BiometricSystem.Database
                 }
             }
         private readonly string _connectionString;
-        private static string LogPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "biometric_log.txt");
+        private static string GetLogPath()
+        {
+            string logRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            if (string.IsNullOrEmpty(logRoot))
+                logRoot = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (string.IsNullOrEmpty(logRoot))
+                logRoot = "C:\\Temp";
+            string logDir = System.IO.Path.Combine(logRoot, "BiometricSystem");
+            System.IO.Directory.CreateDirectory(logDir);
+            return System.IO.Path.Combine(logDir, "biometric_log.txt");
+        }
         
         // Connection String com pooling configurado
         private readonly string _pooledConnectionString;
@@ -69,7 +79,7 @@ namespace BiometricSystem.Database
             try
             {
                 string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
-                File.AppendAllText(LogPath, logMessage + Environment.NewLine);
+                File.AppendAllText(GetLogPath(), logMessage + Environment.NewLine);
                 Debug.WriteLine(logMessage);
             }
             catch { }

@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+=======
+  <!-- Garante que nenhum arquivo de banco de dados seja publicado -->
+  <ItemGroup>
+    <Content Remove="**\*.db" />
+    <Content Remove="**\*.sqlite" />
+    <Content Remove="**\*.sqlite3" />
+    <None Remove="**\*.db" />
+    <None Remove="**\*.sqlite" />
+    <None Remove="**\*.sqlite3" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="**\*.db" CopyToPublishDirectory="Never" />
+    <None Include="**\*.sqlite" CopyToPublishDirectory="Never" />
+    <None Include="**\*.sqlite3" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+>>>>>>> baa86cf (Atualização do sistema: build limpo, banco limpo, config de publish e instalador ajustados)
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -10,23 +27,6 @@
     <RootNamespace>BiometricSystem</RootNamespace>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RollForward>LatestMajor</RollForward>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-    <PackageReference Include="Npgsql" Version="8.0.1" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
   <!-- Referências ao DigitalPersona SDK -->
   <ItemGroup>
     <Reference Include="DPFPDevNET">
