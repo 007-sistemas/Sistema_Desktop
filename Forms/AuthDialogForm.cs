@@ -27,6 +27,20 @@ namespace BiometricSystem.Forms
                 this.Focus();
                 this.txtPassword.Focus();
             };
+
+            // Eventos do teclado virtual
+            this.btnNum0.Click += (s, e) => txtPassword.Text += "0";
+            this.btnNum1.Click += (s, e) => txtPassword.Text += "1";
+            this.btnNum2.Click += (s, e) => txtPassword.Text += "2";
+            this.btnNum3.Click += (s, e) => txtPassword.Text += "3";
+            this.btnNum4.Click += (s, e) => txtPassword.Text += "4";
+            this.btnNum5.Click += (s, e) => txtPassword.Text += "5";
+            this.btnNum6.Click += (s, e) => txtPassword.Text += "6";
+            this.btnNum7.Click += (s, e) => txtPassword.Text += "7";
+            this.btnNum8.Click += (s, e) => txtPassword.Text += "8";
+            this.btnNum9.Click += (s, e) => txtPassword.Text += "9";
+            this.btnLimpar.Click += (s, e) => txtPassword.Text = string.Empty;
+
             this.btnOk.Click += async (s, e) =>
             {
                 this.Enabled = false;
