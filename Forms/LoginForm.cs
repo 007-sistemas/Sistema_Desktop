@@ -42,6 +42,45 @@ namespace BiometricSystem.Forms
 
         public LoginForm(IConfiguration? config = null)
         {
+            database = new DatabaseHelper();
+            // Solicitar cadastro de senha local se ainda não existir
+            if (!database.ExisteSenhaLocal())
+            {
+                using (var senhaForm = new CadastroSenhaLocalForm())
+                {
+                    while (true)
+                    {
+                        var result = senhaForm.ShowDialog();
+                        if (result == DialogResult.OK)
+                        {
+                            if (string.IsNullOrWhiteSpace(senhaForm.Senha) || senhaForm.Senha.Length < 4)
+                            {
+                                MessageBox.Show("A senha deve ter pelo menos 4 caracteres.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                continue;
+                            }
+                            if (senhaForm.Senha != senhaForm.Confirmacao)
+                            {
+                                MessageBox.Show("As senhas não coincidem.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                continue;
+                            }
+                            if (database.SalvarSenhaLocal(senhaForm.Senha))
+                            {
+                                MessageBox.Show("Senha local cadastrada com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                break;
+                            }
+                            else
+                            {
+                                MessageBox.Show("Erro ao salvar a senha local.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("O cadastro da senha local é obrigatório para uso do sistema.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+            }
             InitializeComponent();
             // NÃO forçar FormBorderStyle=None aqui, para permitir o X
             this.StartPosition = FormStartPosition.Manual;
@@ -906,7 +945,13 @@ void ClearPanelTimer_Tick(object? sender, EventArgs e)
 
             // Prompt de autenticação administrativa
             e.Cancel = true;
-            var authDialog = new AuthDialogForm(async (pass) => neonHelper != null && await neonHelper.ValidarManagerByPasswordAsync(pass));
+            var authDialog = new AuthDialogForm(async (pass) =>
+            {
+                // Permite autenticar com senha local OU senha Neon
+                if (database.ValidarSenhaLocal(pass))
+                    return true;
+                return neonHelper != null && await neonHelper.ValidarManagerByPasswordAsync(pass);
+            });
             authDialog.TopMost = true;
             authDialog.BringToFront();
             this.TopMost = false; // Garante que o dialog fique acima

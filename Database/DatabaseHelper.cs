@@ -115,9 +115,112 @@ namespace BiometricSystem.Database
             connectionString = $"Data Source={dbPath};Version=3;";
             LogPath("connectionString", connectionString);
 
-            // InitializeDatabase removido: método não existe
-        
+            // Criar tabela de senha local se não existir
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+                string createTable = @"CREATE TABLE IF NOT EXISTS LocalPassword (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PasswordHash TEXT NOT NULL,
+                    CreatedAt TEXT NOT NULL
+                )";
+                using var cmd = new SQLiteCommand(createTable, connection);
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao criar tabela LocalPassword: {ex.Message}");
+            }
         }
+                /// <summary>
+                /// Salva a senha local (hash) no banco. Só pode haver uma senha.
+                /// </summary>
+                public bool SalvarSenhaLocal(string senha)
+                {
+                    try
+                    {
+                        string hash = GerarHashSenha(senha);
+                        using var connection = new SQLiteConnection(connectionString);
+                        connection.Open();
+                        // Remove senha anterior, se existir
+                        string delete = "DELETE FROM LocalPassword";
+                        using (var delCmd = new SQLiteCommand(delete, connection))
+                            delCmd.ExecuteNonQuery();
+                        // Insere nova senha
+                        string insert = "INSERT INTO LocalPassword (PasswordHash, CreatedAt) VALUES (@hash, @createdAt)";
+                        using var cmd = new SQLiteCommand(insert, connection);
+                        cmd.Parameters.AddWithValue("@hash", hash);
+                        cmd.Parameters.AddWithValue("@createdAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Erro ao salvar senha local: {ex.Message}");
+                        return false;
+                    }
+                }
+
+                /// <summary>
+                /// Verifica se já existe senha local cadastrada
+                /// </summary>
+                public bool ExisteSenhaLocal()
+                {
+                    try
+                    {
+                        using var connection = new SQLiteConnection(connectionString);
+                        connection.Open();
+                        string query = "SELECT COUNT(*) FROM LocalPassword";
+                        using var cmd = new SQLiteCommand(query, connection);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && int.TryParse(result.ToString(), out int count))
+                            return count > 0;
+                        return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Erro ao verificar senha local: {ex.Message}");
+                        return false;
+                    }
+                }
+
+                /// <summary>
+                /// Valida a senha local informada
+                /// </summary>
+                public bool ValidarSenhaLocal(string senha)
+                {
+                    try
+                    {
+                        string hash = GerarHashSenha(senha);
+                        using var connection = new SQLiteConnection(connectionString);
+                        connection.Open();
+                        string query = "SELECT COUNT(*) FROM LocalPassword WHERE PasswordHash = @hash";
+                        using var cmd = new SQLiteCommand(query, connection);
+                        cmd.Parameters.AddWithValue("@hash", hash);
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && int.TryParse(result.ToString(), out int count))
+                            return count > 0;
+                        return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Erro ao validar senha local: {ex.Message}");
+                        return false;
+                    }
+                }
+
+                /// <summary>
+                /// Gera hash SHA256 da senha
+                /// </summary>
+                private string GerarHashSenha(string senha)
+                {
+                    using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                    {
+                        byte[] hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(senha));
+                        return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                    }
+                }
+
 
         /// <summary>
         /// Decide o tipo do próximo ponto (ENTRADA/SAIDA) considerando tolerância e plantão noturno.
