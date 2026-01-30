@@ -28,7 +28,9 @@ namespace BiometricSystem.Forms
             this.btnNum7 = new System.Windows.Forms.Button();
             this.btnNum8 = new System.Windows.Forms.Button();
             this.btnNum9 = new System.Windows.Forms.Button();
-            this.btnLimpar = new System.Windows.Forms.Button();
+                this.btnLimparPrincipal = new System.Windows.Forms.Button();
+
+
             this.SuspendLayout();
             // 
             // lblPassword
@@ -63,7 +65,7 @@ namespace BiometricSystem.Forms
             // Linha 2: 4 5 6
             this.btnNum4.Text = "4";
             this.btnNum4.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum4.Location = new System.Drawing.Point(0, btnH + pad);
+            this.btnNum4.Location = new System.Drawing.Point(0, 1 * (btnH + pad));
             this.btnNum5.Text = "5";
             this.btnNum5.Size = new System.Drawing.Size(btnW, btnH);
             this.btnNum5.Location = new System.Drawing.Point(btnW + pad, btnH + pad);
@@ -80,13 +82,11 @@ namespace BiometricSystem.Forms
             this.btnNum9.Text = "9";
             this.btnNum9.Size = new System.Drawing.Size(btnW, btnH);
             this.btnNum9.Location = new System.Drawing.Point(2 * (btnW + pad), 2 * (btnH + pad));
-            // Linha 4: Limpar 0
-            this.btnLimpar.Text = "Limpar";
-            this.btnLimpar.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnLimpar.Location = new System.Drawing.Point(0, 3 * (btnH + pad));
-            this.btnNum0.Text = "0";
-            this.btnNum0.Size = new System.Drawing.Size(btnW * 2 + pad, btnH);
-            this.btnNum0.Location = new System.Drawing.Point(btnW + pad, 3 * (btnH + pad));
+            // Linha 4: Limpar e 0
+                // Linha 4: apenas 0 centralizado
+                this.btnNum0.Text = "0";
+                this.btnNum0.Size = new System.Drawing.Size(btnW * 2 + pad, btnH);
+                this.btnNum0.Location = new System.Drawing.Point(btnW + pad, 3 * (btnH + pad));
             // Adiciona botões ao painel
             this.panelTeclado.Controls.Add(this.btnNum1);
             this.panelTeclado.Controls.Add(this.btnNum2);
@@ -98,7 +98,6 @@ namespace BiometricSystem.Forms
             this.panelTeclado.Controls.Add(this.btnNum8);
             this.panelTeclado.Controls.Add(this.btnNum9);
             this.panelTeclado.Controls.Add(this.btnNum0);
-            this.panelTeclado.Controls.Add(this.btnLimpar);
             // 
             this.btnOk.Text = "OK";
             this.btnOk.Location = new System.Drawing.Point(110, 200);
@@ -120,6 +119,11 @@ namespace BiometricSystem.Forms
             this.Controls.Add(this.lblPassword);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.panelTeclado);
+            // Configuração do botão Limpar
+            this.btnLimparPrincipal.Text = "Limpar";
+            this.btnLimparPrincipal.Size = new System.Drawing.Size(80, 30);
+            this.btnLimparPrincipal.Location = new System.Drawing.Point(20, 200);
+            this.Controls.Add(this.btnLimparPrincipal);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnCancel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -145,6 +149,6 @@ namespace BiometricSystem.Forms
         private System.Windows.Forms.Button btnNum7;
         private System.Windows.Forms.Button btnNum8;
         private System.Windows.Forms.Button btnNum9;
-        private System.Windows.Forms.Button btnLimpar;
+        private System.Windows.Forms.Button btnLimparPrincipal;
     }
 }

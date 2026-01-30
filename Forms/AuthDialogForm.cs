@@ -39,7 +39,17 @@ namespace BiometricSystem.Forms
             this.btnNum7.Click += (s, e) => txtPassword.Text += "7";
             this.btnNum8.Click += (s, e) => txtPassword.Text += "8";
             this.btnNum9.Click += (s, e) => txtPassword.Text += "9";
-            this.btnLimpar.Click += (s, e) => txtPassword.Text = string.Empty;
+
+            // btnLimpar removido
+                this.btnLimparPrincipal.Click += (s, e) => txtPassword.Text = string.Empty;
+
+
+            // Botão Cancelar fecha o modal
+            this.btnCancel.Click += (s, e) =>
+            {
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+            };
 
             this.btnOk.Click += async (s, e) =>
             {
@@ -55,6 +65,7 @@ namespace BiometricSystem.Forms
                     {
                         MessageBox.Show($"Erro ao autenticar: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         AuthSuccess = false;
+                        txtPassword.Text = string.Empty;
                         this.DialogResult = DialogResult.Cancel;
                         this.Enabled = true;
                         return;
@@ -70,6 +81,7 @@ namespace BiometricSystem.Forms
                     {
                         AuthSuccess = false;
                         MessageBox.Show("Acesso não autorizado!", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        txtPassword.Text = string.Empty;
                         this.DialogResult = DialogResult.Cancel;
                         this.Enabled = true;
                     }
