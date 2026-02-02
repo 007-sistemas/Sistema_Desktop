@@ -489,6 +489,14 @@ namespace BiometricSystem.Forms
                 cmbSetor.Enabled = false;
                 isCapturing = true;
 
+                // SINCRONIZAR BIOMETRIAS NA PRIMEIRA INSTALAÇÃO (logo após setor selecionado)
+                LogToFile("[SETOR-SELECIONADO] 🔍 Verificando se é primeira instalação para sincronização inicial...");
+                if (database.EhPrimeiraInstalacao() && neonHelper != null)
+                {
+                    LogToFile("[SETOR-SELECIONADO] 📥 Primeira instalação detectada! Iniciando sincronização...");
+                    await ExecutarSincronizacaoInicial();
+                }
+
                 lblStatus.Text = $"⏳ Setor: {selectedSetor} - Posicione o dedo no leitor...";
                 
                 // Animar ícone de digital
@@ -501,6 +509,75 @@ namespace BiometricSystem.Forms
                 cmbSetor.Enabled = true;
                 isCapturing = false;
                 panelFingerprint.BackColor = System.Drawing.Color.White;
+            }
+        }
+
+        private async Task ExecutarSincronizacaoInicial()
+        {
+            // Criar e exibir formulário de progresso
+            BiometriaSyncProgressForm syncProgressForm = null;
+            this.Invoke(() =>
+            {
+                syncProgressForm = new BiometriaSyncProgressForm();
+                syncProgressForm.Show(this);
+            });
+
+            try
+            {
+                LogToFile("[SINC-INICIAL] 📡 Chamando BaixarTodasBiometriasParaSincAsync()...");
+                var biometriasDoNeon = await neonHelper!.BaixarTodasBiometriasParaSincAsync();
+                LogToFile($"[SINC-INICIAL] ✅ Download concluído: {biometriasDoNeon?.Count ?? 0} biometrias recebidas");
+
+                if (biometriasDoNeon != null && biometriasDoNeon.Count > 0)
+                {
+                    LogToFile($"[SINC-INICIAL] 💾 Salvando {biometriasDoNeon.Count} biometrias no banco local...");
+                    int totalInseridas = await database.SalvarBiometriasEmLoteAsync(biometriasDoNeon);
+                    LogToFile($"[SINC-INICIAL] ✅ {totalInseridas} biometrias salvas no banco local");
+
+                    if (syncProgressForm != null)
+                    {
+                        this.Invoke(() => { syncProgressForm.SetSuccess(totalInseridas); });
+                    }
+                    await Task.Delay(2500);
+                }
+                else
+                {
+                    LogToFile("[SINC-INICIAL] ⚠️ Nenhuma biometria encontrada no servidor para sincronizar");
+                    if (syncProgressForm != null)
+                    {
+                        this.Invoke(() =>
+                        {
+                            syncProgressForm.SetWarning(
+                                "Nenhuma biometria foi encontrada no servidor para sincronizar.\n" +
+                                "O sistema está pronto para uso (banco local vazio)."
+                            );
+                        });
+                    }
+                    await Task.Delay(2500);
+                }
+            }
+            catch (Exception syncEx)
+            {
+                LogToFile($"[SINC-INICIAL] ❌ ERRO ao sincronizar: {syncEx.GetType().Name}: {syncEx.Message}");
+                if (syncProgressForm != null)
+                {
+                    this.Invoke(() =>
+                    {
+                        syncProgressForm.SetError(
+                            $"{syncEx.GetType().Name}: {syncEx.Message}\n\n" +
+                            "O sistema continuará funcionando com o banco local."
+                        );
+                    });
+                }
+                await Task.Delay(3000);
+            }
+            finally
+            {
+                this.Invoke(() =>
+                {
+                    syncProgressForm?.Close();
+                    syncProgressForm?.Dispose();
+                });
             }
         }
 
@@ -943,11 +1020,12 @@ namespace BiometricSystem.Forms
             authDialog.TopMost = true;
             authDialog.BringToFront();
             this.TopMost = false; // Garante que o dialog fique acima
-            authDialog.FormClosed += (s, args) =>
+            authDialog.FormClosed += async (s, args) =>
             {
                 this.TopMost = true; // Restaura prioridade
                 if (authDialog.AuthSuccess)
                 {
+                    LogToFile("[SINC-INICIAL] ✅ Abrindo AccessMenuForm...");
                     var menu = new AccessMenuForm(this);
                     menu.TopMost = true;
                     menu.Show();

@@ -1080,6 +1080,97 @@ namespace BiometricSystem.Database
             }
         }
 
+        /// <summary>
+        /// Salva múltiplas biometrias em lote (usado para download inicial do NEON)
+        /// Todas são marcadas como SyncedToNeon = 1
+        /// </summary>
+        public async Task<int> SalvarBiometriasEmLoteAsync(List<(string CooperadoId, string CooperadoNome, byte[] Template, int FingerIndex)> biometrias)
+        {
+            int totalInseridas = 0;
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                using var transaction = connection.BeginTransaction();
+                try
+                {
+                    foreach (var bio in biometrias)
+                    {
+                        string id = Guid.NewGuid().ToString();
+                        string query = @"INSERT INTO Biometrias (Id, CooperadoId, CooperadoNome, FingerIndex, Hash, Template, CreatedAt, SyncedToNeon) 
+                                        VALUES (@Id, @CooperadoId, @CooperadoNome, @FingerIndex, @Hash, @Template, @CreatedAt, 1)";
+
+                        using var cmd = new SQLiteCommand(query, connection);
+                        cmd.Transaction = transaction;
+                        cmd.Parameters.AddWithValue("@Id", id);
+                        cmd.Parameters.AddWithValue("@CooperadoId", bio.CooperadoId);
+                        cmd.Parameters.AddWithValue("@CooperadoNome", bio.CooperadoNome);
+                        cmd.Parameters.AddWithValue("@FingerIndex", bio.FingerIndex);
+                        cmd.Parameters.AddWithValue("@Hash", "");
+                        cmd.Parameters.AddWithValue("@Template", bio.Template);
+                        cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows > 0) totalInseridas++;
+                    }
+
+                    transaction.Commit();
+                    System.Diagnostics.Debug.WriteLine($"✅ {totalInseridas} biometrias salvas em lote (SyncedToNeon = 1)");
+                }
+                catch (Exception txEx)
+                {
+                    transaction.Rollback();
+                    System.Diagnostics.Debug.WriteLine($"❌ Erro na transação de biometrias: {txEx.Message}");
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Erro ao salvar biometrias em lote: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   Stack Trace: {ex.StackTrace}");
+            }
+
+            return totalInseridas;
+        }
+
+        /// <summary>
+        /// Verifica se é a primeira instalação (não há biometrias sincronizadas com NEON)
+        /// Usa a presença de registros com SyncedToNeon = 1 como marcador de primeira sincronização realizada
+        /// </summary>
+        public bool EhPrimeiraInstalacao()
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                // Verificar se existe alguma biometria já sincronizada (marcas de primeira sincronização realizada)
+                string query = "SELECT COUNT(*) FROM Biometrias WHERE SyncedToNeon = 1";
+                using var cmd = new SQLiteCommand(query, connection);
+                long count = (long)cmd.ExecuteScalar();
+
+                System.Diagnostics.Debug.WriteLine($"[DB] EhPrimeiraInstalacao: Biometrias com SyncedToNeon=1: {count}");
+
+                // Se houver biometrias sincronizadas, não é primeira instalação
+                if (count > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("[DB] ℹ️ NÃO é primeira instalação (há biometrias sincronizadas)");
+                    return false;
+                }
+
+                System.Diagnostics.Debug.WriteLine("[DB] ✅ É PRIMEIRA INSTALAÇÃO (nenhuma biometria sincronizada encontrada)");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB] ❌ Erro em EhPrimeiraInstalacao: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[DB]    Stack: {ex.StackTrace}");
+                // Em caso de erro, assume que é primeira instalação
+                return true;
+            }
+        }
+
         #endregion
     }
 }

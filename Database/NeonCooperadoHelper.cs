@@ -947,5 +947,149 @@ namespace BiometricSystem.Database
 
             return setores;
         }
+
+        /// <summary>
+        /// Baixa TODAS as biometrias do NEON para sincronização inicial na primeira instalação
+        /// Retorna lista com CooperadoId, CooperadoNome, Template, FingerIndex
+        /// </summary>
+        public async Task<List<(string CooperadoId, string CooperadoNome, byte[] Template, int FingerIndex)>> BaixarTodasBiometriasParaSincAsync()
+        {
+            var biometrias = new List<(string CooperadoId, string CooperadoNome, byte[] Template, int FingerIndex)>();
+            NpgsqlConnection connection = null;
+
+            try
+            {
+                Log("[SINC-INICIAL] 🔄 Iniciando download de todas as biometrias do NEON para sincronização...");
+                Log($"[SINC-INICIAL]    Connection String Preview: {_pooledConnectionString.Substring(0, Math.Min(100, _pooledConnectionString.Length))}...");
+                
+                Log("[SINC-INICIAL] 📡 Criando objeto NpgsqlConnection...");
+                connection = new NpgsqlConnection(_pooledConnectionString);
+                
+                Log("[SINC-INICIAL] 📡 Abrindo conexão com NEON (OpenAsync)...");
+                await connection.OpenAsync();
+                Log("[SINC-INICIAL] ✅ Conexão com NEON estabelecida com sucesso!");
+
+                string query = @"
+                    SELECT b.cooperado_id, c.name, b.template, b.finger_index
+                    FROM biometrias b
+                    INNER JOIN cooperados c ON b.cooperado_id = c.id
+                    ORDER BY b.created_at_db DESC";
+
+                Log($"[SINC-INICIAL] 📋 Query a executar:");
+                Log($"[SINC-INICIAL]    {query}");
+                
+                Log("[SINC-INICIAL] 📡 Criando NpgsqlCommand...");
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.CommandTimeout = 30;
+                Log("[SINC-INICIAL] ✅ NpgsqlCommand criado");
+
+                Log("[SINC-INICIAL] 📡 Executando ExecuteReaderAsync()...");
+                using var reader = await cmd.ExecuteReaderAsync();
+                Log("[SINC-INICIAL] ✅ ExecuteReaderAsync() retornou sucesso");
+
+                int count = 0;
+                Log("[SINC-INICIAL] 📊 Iniciando leitura de registros...");
+                
+                while (await reader.ReadAsync())
+                {
+                    try
+                    {
+                        count++;
+                        var cooperadoId = reader.GetString(0);
+                        var cooperadoNome = reader.GetString(1);
+                        
+                        // Template pode estar em hexadecimal (padrão PostgreSQL) ou Base64
+                        object templateObj = reader.GetValue(2);
+                        byte[] template = null;
+                        
+                        if (templateObj is byte[] templateBytes)
+                        {
+                            template = templateBytes;
+                            Log($"[SINC-INICIAL]    ✓ Template já em bytes ({template.Length} bytes)");
+                        }
+                        else if (templateObj is string templateStr)
+                        {
+                            // Tentar hexadecimal primeiro (formato padrão do PostgreSQL)
+                            try
+                            {
+                                Log($"[SINC-INICIAL]    ℹ️ Tentando converter template de HEXADECIMAL...");
+                                string hexStr = templateStr.TrimStart('\\', 'x');  // Remove \x do início
+                                template = Convert.FromHexString(hexStr);
+                                Log($"[SINC-INICIAL]    ✓ Template convertido de HEXADECIMAL ({template.Length} bytes)");
+                            }
+                            catch (Exception hexEx)
+                            {
+                                // Se hexadecimal falhar, tentar Base64
+                                try
+                                {
+                                    Log($"[SINC-INICIAL]    ℹ️ Hexadecimal falhou ({hexEx.GetType().Name}), tentando Base64...");
+                                    template = Convert.FromBase64String(templateStr);
+                                    Log($"[SINC-INICIAL]    ✓ Template convertido de Base64 ({template.Length} bytes)");
+                                }
+                                catch (Exception base64Ex)
+                                {
+                                    // Se ambos falharem, registrar erro e continuar (não lançar exceção)
+                                    Log($"[SINC-INICIAL]    ❌ Falha ao converter template (Hex: {hexEx.GetType().Name}, B64: {base64Ex.GetType().Name})");
+                                    Log($"[SINC-INICIAL]       Primeiros 100 caracteres: {(templateStr.Length > 100 ? templateStr.Substring(0, 100) : templateStr)}");
+                                    continue;  // Pula este registro e continua com o próximo
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Log($"[SINC-INICIAL]    ❌ Template está em formato inesperado: {templateObj?.GetType().Name}");
+                            continue;  // Pula este registro e continua com o próximo
+                        }
+                        
+                        if (template == null || template.Length == 0)
+                        {
+                            Log($"[SINC-INICIAL]    ❌ Template vazio ou nulo, pulando registro");
+                            continue;
+                        }
+                        
+                        var fingerIndex = reader.GetInt32(3);
+
+                        biometrias.Add((cooperadoId, cooperadoNome, template, fingerIndex));
+                        Log($"[SINC-INICIAL]    ✓ Registro {count}: {cooperadoNome} (ID: {cooperadoId}, Dedo: {fingerIndex}, Template: {template.Length} bytes)");
+                    }
+                    catch (Exception regEx)
+                    {
+                        Log($"[SINC-INICIAL] ❌ Erro ao ler registro #{count}: {regEx.Message}");
+                        Log($"[SINC-INICIAL]    Stack: {regEx.StackTrace}");
+                        // Continuar com o próximo registro em vez de lançar exceção
+                        continue;
+                    }
+                }
+
+                Log($"[SINC-INICIAL] ✅ Leitura de registros concluída!");
+                Log($"[SINC-INICIAL] 📊 RESULTADO FINAL: {biometrias.Count} biometrias baixadas do NEON");
+                return biometrias;
+            }
+            catch (Exception ex)
+            {
+                Log($"[SINC-INICIAL] ❌ ERRO FATAL ao baixar biometrias: {ex.GetType().Name}");
+                Log($"[SINC-INICIAL]    Mensagem: {ex.Message}");
+                Log($"[SINC-INICIAL]    Stack: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Log($"[SINC-INICIAL]    Inner Exception: {ex.InnerException.GetType().Name}");
+                    Log($"[SINC-INICIAL]    Inner Message: {ex.InnerException.Message}");
+                    Log($"[SINC-INICIAL]    Inner Stack: {ex.InnerException.StackTrace}");
+                }
+                return biometrias;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try
+                    {
+                        connection.Close();
+                        connection.Dispose();
+                    }
+                    catch { }
+                }
+            }
+        }
     }
 }

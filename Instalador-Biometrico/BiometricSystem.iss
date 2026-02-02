@@ -1,5 +1,5 @@
 [Setup]
-AppName=BiometricSystem
+AppName=iDev Sistemas
 AppVersion=1.0
 DefaultDirName={userappdata}\BiometricSystem
 DefaultGroupName=BiometricSystem
