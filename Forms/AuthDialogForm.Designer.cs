@@ -35,58 +35,62 @@ namespace BiometricSystem.Forms
             // 
             // lblPassword
             // 
-            this.lblPassword.Text = "Senha:";
-            this.lblPassword.Location = new System.Drawing.Point(20, 30);
-            this.lblPassword.Size = new System.Drawing.Size(80, 20);
+            this.lblPassword.Text = "Senha";
+            this.lblPassword.Location = new System.Drawing.Point(0, 20);
+            this.lblPassword.Size = new System.Drawing.Size(320, 25);
+            this.lblPassword.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblPassword.Font = new System.Drawing.Font("Arial", 11, System.Drawing.FontStyle.Bold);
             // 
             // txtPassword
             // 
-            this.txtPassword.Location = new System.Drawing.Point(110, 30);
-            this.txtPassword.Size = new System.Drawing.Size(180, 23);
+            this.txtPassword.Location = new System.Drawing.Point(75, 50);
+            this.txtPassword.Size = new System.Drawing.Size(170, 28);
             this.txtPassword.PasswordChar = '*';
+            this.txtPassword.Font = new System.Drawing.Font("Arial", 12);
+            this.txtPassword.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // panelTeclado
-            this.panelTeclado.Location = new System.Drawing.Point(20, 60);
-            this.panelTeclado.Size = new System.Drawing.Size(270, 120);
+            this.panelTeclado.Location = new System.Drawing.Point(10, 90);
+            this.panelTeclado.Size = new System.Drawing.Size(300, 120);
             //
             // Botões numéricos e Limpar
             //
             int btnW = 60, btnH = 35, pad = 5;
+            int offset = (300 - (3 * (btnW + pad))) / 2; // Centralizar o teclado dentro do painel
             // Linha 1: 1 2 3
             this.btnNum1.Text = "1";
             this.btnNum1.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum1.Location = new System.Drawing.Point(0, 0);
+            this.btnNum1.Location = new System.Drawing.Point(offset, 0);
             this.btnNum2.Text = "2";
             this.btnNum2.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum2.Location = new System.Drawing.Point(btnW + pad, 0);
+            this.btnNum2.Location = new System.Drawing.Point(offset + btnW + pad, 0);
             this.btnNum3.Text = "3";
             this.btnNum3.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum3.Location = new System.Drawing.Point(2 * (btnW + pad), 0);
+            this.btnNum3.Location = new System.Drawing.Point(offset + 2 * (btnW + pad), 0);
             // Linha 2: 4 5 6
             this.btnNum4.Text = "4";
             this.btnNum4.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum4.Location = new System.Drawing.Point(0, 1 * (btnH + pad));
+            this.btnNum4.Location = new System.Drawing.Point(offset, 1 * (btnH + pad));
             this.btnNum5.Text = "5";
             this.btnNum5.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum5.Location = new System.Drawing.Point(btnW + pad, btnH + pad);
+            this.btnNum5.Location = new System.Drawing.Point(offset + btnW + pad, btnH + pad);
             this.btnNum6.Text = "6";
             this.btnNum6.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum6.Location = new System.Drawing.Point(2 * (btnW + pad), btnH + pad);
+            this.btnNum6.Location = new System.Drawing.Point(offset + 2 * (btnW + pad), btnH + pad);
             // Linha 3: 7 8 9
             this.btnNum7.Text = "7";
             this.btnNum7.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum7.Location = new System.Drawing.Point(0, 2 * (btnH + pad));
+            this.btnNum7.Location = new System.Drawing.Point(offset, 2 * (btnH + pad));
             this.btnNum8.Text = "8";
             this.btnNum8.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum8.Location = new System.Drawing.Point(btnW + pad, 2 * (btnH + pad));
+            this.btnNum8.Location = new System.Drawing.Point(offset + btnW + pad, 2 * (btnH + pad));
             this.btnNum9.Text = "9";
             this.btnNum9.Size = new System.Drawing.Size(btnW, btnH);
-            this.btnNum9.Location = new System.Drawing.Point(2 * (btnW + pad), 2 * (btnH + pad));
-            // Linha 4: Limpar e 0
-                // Linha 4: apenas 0 centralizado
-                this.btnNum0.Text = "0";
-                this.btnNum0.Size = new System.Drawing.Size(btnW * 2 + pad, btnH);
-                this.btnNum0.Location = new System.Drawing.Point(btnW + pad, 3 * (btnH + pad));
+            this.btnNum9.Location = new System.Drawing.Point(offset + 2 * (btnW + pad), 2 * (btnH + pad));
+            // Linha 4: apenas 0 centralizado
+            this.btnNum0.Text = "0";
+            this.btnNum0.Size = new System.Drawing.Size(btnW, btnH);
+            this.btnNum0.Location = new System.Drawing.Point(offset + btnW + pad, 3 * (btnH + pad));
             // Adiciona botões ao painel
             this.panelTeclado.Controls.Add(this.btnNum1);
             this.panelTeclado.Controls.Add(this.btnNum2);
@@ -100,29 +104,35 @@ namespace BiometricSystem.Forms
             this.panelTeclado.Controls.Add(this.btnNum0);
             // 
             this.btnOk.Text = "OK";
-            this.btnOk.Location = new System.Drawing.Point(110, 200);
-            this.btnOk.Size = new System.Drawing.Size(80, 30);
+            this.btnOk.Location = new System.Drawing.Point(50, 220);
+            this.btnOk.Size = new System.Drawing.Size(70, 30);
             this.btnOk.DialogResult = System.Windows.Forms.DialogResult.OK;
             // 
             // btnCancel
             // 
             this.btnCancel.Text = "Cancelar";
-            this.btnCancel.Location = new System.Drawing.Point(210, 200);
-            this.btnCancel.Size = new System.Drawing.Size(80, 30);
+            this.btnCancel.Location = new System.Drawing.Point(125, 220);
+            this.btnCancel.Size = new System.Drawing.Size(70, 30);
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            // 
+            // btnLimparPrincipal
+            // 
+            this.btnLimparPrincipal.Text = "Limpar";
+            this.btnLimparPrincipal.Size = new System.Drawing.Size(70, 30);
+            this.btnLimparPrincipal.Location = new System.Drawing.Point(200, 220);
             // 
             // AuthDialogForm
             // 
             this.AcceptButton = this.btnOk;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(320, 250);
+            this.ClientSize = new System.Drawing.Size(320, 270);
             this.Controls.Add(this.lblPassword);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.panelTeclado);
             // Configuração do botão Limpar
             this.btnLimparPrincipal.Text = "Limpar";
-            this.btnLimparPrincipal.Size = new System.Drawing.Size(80, 30);
-            this.btnLimparPrincipal.Location = new System.Drawing.Point(20, 200);
+            this.btnLimparPrincipal.Size = new System.Drawing.Size(70, 30);
+            this.btnLimparPrincipal.Location = new System.Drawing.Point(200, 220);
             this.Controls.Add(this.btnLimparPrincipal);
             this.Controls.Add(this.btnOk);
             this.Controls.Add(this.btnCancel);
