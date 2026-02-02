@@ -10,6 +10,7 @@
     <RootNamespace>BiometricSystem</RootNamespace>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RollForward>LatestMajor</RollForward>
+    <ApplicationIcon>iDev-logo-preto.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Referências ao DigitalPersona SDK -->
