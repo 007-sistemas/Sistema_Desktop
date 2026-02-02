@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BiometricSystem.Database;
@@ -666,10 +667,12 @@ namespace BiometricSystem.Forms
         {
             try
             {
+                LogToFile($"[SYNC] Iniciando sincronização de biometria. cooperadoId={cooperadoId}");
                 // Verificar se neonHelper está inicializado
                 if (_neonCooperadoHelper == null)
                 {
                     Debug.WriteLine("⚠️ NeonCooperadoHelper não inicializado, pulando sincronização");
+                    LogToFile("[SYNC] NeonCooperadoHelper não inicializado, pulando sincronização");
                     return;
                 }
 
@@ -688,25 +691,36 @@ namespace BiometricSystem.Forms
                     .Where(b => b.CooperadoId == cooperadoId)
                     .ToList();
 
+                LogToFile($"[SYNC] Biometrias não sincronizadas encontradas: {biometriasNaoSincronizadas.Count}");
+
                 foreach (var biometria in biometriasNaoSincronizadas)
                 {
                     try
                     {
+                        // Usar o nome do cooperado diretamente do registro local
+                        string cooperadoNome = biometria.CooperadoNome ?? "";
+
+                        LogToFile($"[SYNC] Enviando biometria {biometria.Id}. cooperadoId={cooperadoId}, nome={cooperadoNome}, fingerIndex={biometria.FingerIndex}, bytes={biometria.Template?.Length ?? 0}");
+
                         bool sucesso = await _neonCooperadoHelper.SalvarBiometriaAsync(
                             cooperadoId,
                             biometria.Template,
-                            biometria.FingerIndex
+                            biometria.FingerIndex,
+                            cooperadoNome
                         );
 
                         if (sucesso)
                         {
                             db.MarcabiometriaComoSincronizada(biometria.Id);
                             Debug.WriteLine($"✅ Biometria {biometria.Id} sincronizada com NEON");
+                            LogToFile($"[SYNC] Biometria {biometria.Id} sincronizada com sucesso");
                         }
                     }
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Erro ao sincronizar biometria com NEON: {ex.Message}");
+                        LogToFile($"[SYNC] Erro ao sincronizar biometria {biometria.Id}: {ex.Message}");
+                        LogToFile($"[SYNC] Stack: {ex.StackTrace}");
                     }
                 }
 
@@ -812,6 +826,22 @@ namespace BiometricSystem.Forms
             labelBiometriaStatus.ForeColor = Color.FromArgb(120, 120, 120);
             labelBiometriaStatus.BackColor = Color.FromArgb(235, 235, 235);
             buttonLimparBiometria.Enabled = false;
+        }
+
+        private void LogToFile(string message)
+        {
+            try
+            {
+                string logRoot = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) ?? "C:\\Temp";
+                if (string.IsNullOrEmpty(logRoot)) logRoot = "C:\\Temp";
+                string logDir = Path.Combine(logRoot, "BiometricSystem");
+                Directory.CreateDirectory(logDir);
+                string logPath = Path.Combine(logDir, "biometric_log.txt");
+                string logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}";
+                File.AppendAllText(logPath, logMessage + Environment.NewLine);
+                Debug.WriteLine(logMessage);
+            }
+            catch { }
         }
 
         private void InitializeComponent()

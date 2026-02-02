@@ -106,9 +106,10 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Salva uma biometria na tabela 'biometrias' do NEON
         /// </summary>
-        public async Task<bool> SalvarBiometriaAsync(string cooperadoId, byte[] template, int fingerIndex = 0)
+        public async Task<bool> SalvarBiometriaAsync(string cooperadoId, byte[] template, int fingerIndex = 0, string cooperadoNome = null)
         {
             NpgsqlConnection connection = null;
+            Log($"[NEON] Iniciando salvar biometria: cooperadoId={cooperadoId}, fingerIndex={fingerIndex}, templateBytes={template?.Length ?? 0}, cooperadoNome={cooperadoNome}");
 
             try
             {
@@ -119,23 +120,27 @@ namespace BiometricSystem.Database
                 string hash = GerarHashBiometria(template);
 
                 string query = @"
-                    INSERT INTO biometrias (cooperado_id, finger_index, hash, template, created_at)
-                    VALUES (@cooperado_id, @finger_index, @hash, @template, NOW())";
+                    INSERT INTO biometrias (cooperado_id, finger_index, hash, template, ""CooperadoNome"", created_at)
+                    VALUES (@cooperado_id, @finger_index, @hash, @template, @cooperado_nome, NOW())";
 
                 using var cmd = new NpgsqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
                 cmd.Parameters.AddWithValue("@finger_index", fingerIndex);
                 cmd.Parameters.AddWithValue("@hash", hash);
                 cmd.Parameters.AddWithValue("@template", template);
+                cmd.Parameters.AddWithValue("@cooperado_nome", cooperadoNome ?? (object)DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 Debug.WriteLine($"✅ Biometria salva no NEON. Rows affected: {rowsAffected}");
+                Log($"[NEON] Biometria salva com sucesso. Rows affected: {rowsAffected}");
 
                 return rowsAffected > 0;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Erro ao salvar biometria no NEON: {ex.Message}");
+                Log($"[NEON] Erro ao salvar biometria: {ex.Message}");
+                Log($"[NEON] Stack: {ex.StackTrace}");
                 return false;
             }
             finally

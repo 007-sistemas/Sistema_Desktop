@@ -270,7 +270,7 @@ namespace BiometricSystem.Forms
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
                         this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
-            this.Text = "Sistema Biométrico - Registro de Ponto";
+            this.Text = "Sistema Biométrico - Controle de Produção";
             this.Resize += new System.EventHandler(this.LoginForm_Resize);
             
             this.panelHeader.ResumeLayout(false);

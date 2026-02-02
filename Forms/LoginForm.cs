@@ -871,7 +871,8 @@ namespace BiometricSystem.Forms
                         bool sucesso = await neonHelper.SalvarBiometriaAsync(
                             biometria.CooperadoId,
                             biometria.Template,
-                            biometria.FingerIndex
+                            biometria.FingerIndex,
+                            biometria.CooperadoNome
                         );
 
                         if (sucesso)

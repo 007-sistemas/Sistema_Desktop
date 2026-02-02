@@ -825,15 +825,14 @@ namespace BiometricSystem.Database
         /// <summary>
         /// Busca biometrias que ainda não foram sincronizadas com NEON
         /// </summary>
-        public List<(string Id, string CooperadoId, byte[] Template, int FingerIndex)> BuscarBiometriasNaoSincronizadas()
-        {
-            var biometrias = new List<(string Id, string CooperadoId, byte[] Template, int FingerIndex)>();
+        public List<(string Id, string CooperadoId, string CooperadoNome, byte[] Template, int FingerIndex)> BuscarBiometriasNaoSincronizadas() {
+            var biometrias = new List<(string Id, string CooperadoId, string CooperadoNome, byte[] Template, int FingerIndex)>();
             try
             {
                 using var connection = new SQLiteConnection(connectionString);
                 connection.Open();
 
-                string query = "SELECT Id, CooperadoId, Template, FingerIndex FROM Biometrias WHERE SyncedToNeon = 0 LIMIT 500";
+                string query = "SELECT Id, CooperadoId, CooperadoNome, Template, FingerIndex FROM Biometrias WHERE SyncedToNeon = 0 LIMIT 500";
                 using var cmd = new SQLiteCommand(query, connection);
                 using var reader = cmd.ExecuteReader();
 
@@ -841,10 +840,11 @@ namespace BiometricSystem.Database
                 {
                     string id = reader.GetString(0);
                     string cooperadoId = reader.GetString(1);
-                    byte[] template = (byte[])reader[2];
-                    int fingerIndex = reader.GetInt32(3);
+                    string cooperadoNome = reader.GetString(2);
+                    byte[] template = (byte[])reader[3];
+                    int fingerIndex = reader.GetInt32(4);
 
-                    biometrias.Add((id, cooperadoId, template, fingerIndex));
+                    biometrias.Add((id, cooperadoId, cooperadoNome, template, fingerIndex));
                 }
             }
             catch (Exception ex)
@@ -1083,3 +1083,4 @@ namespace BiometricSystem.Database
         #endregion
     }
 }
+
