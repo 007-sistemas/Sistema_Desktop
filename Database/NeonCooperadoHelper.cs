@@ -153,6 +153,75 @@ namespace BiometricSystem.Database
         }
 
         /// <summary>
+        /// Verifica se há biometria cadastrada no NEON para o cooperado
+        /// </summary>
+        public async Task<bool> TemBiometriaAsync(string cooperadoId)
+        {
+            NpgsqlConnection connection = null;
+            try
+            {
+                connection = new NpgsqlConnection(_pooledConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT COUNT(*) FROM biometrias WHERE cooperado_id = @cooperado_id";
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
+
+                var result = await cmd.ExecuteScalarAsync();
+                if (result != null && int.TryParse(result.ToString(), out int count))
+                {
+                    return count > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao verificar biometria no NEON: {ex.Message}");
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try { connection.Close(); connection.Dispose(); } catch { }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Remove biometrias do NEON para o cooperado
+        /// </summary>
+        public async Task<int> RemoverBiometriasAsync(string cooperadoId)
+        {
+            NpgsqlConnection connection = null;
+            try
+            {
+                connection = new NpgsqlConnection(_pooledConnectionString);
+                await connection.OpenAsync();
+
+                string query = "DELETE FROM biometrias WHERE cooperado_id = @cooperado_id";
+                using var cmd = new NpgsqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@cooperado_id", cooperadoId);
+
+                int rows = await cmd.ExecuteNonQueryAsync();
+                Debug.WriteLine($"🧹 Biometrias removidas do NEON: {rows}");
+                return rows;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Erro ao remover biometria do NEON: {ex.Message}");
+                return 0;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    try { connection.Close(); connection.Dispose(); } catch { }
+                }
+            }
+        }
+
+        /// <summary>
         /// Gera um hash SHA256 do template biométrico
         /// </summary>
         private string GerarHashBiometria(byte[] template)

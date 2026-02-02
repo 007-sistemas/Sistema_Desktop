@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BiometricSystem.Database;
@@ -31,8 +33,10 @@ namespace BiometricSystem.Forms
         private Button buttonSalvar;
         private Button buttonCancelar;
         private Button buttonRecarregar;
+        private Button buttonLimparBiometria;
         private Label labelStatus;
         private Label labelLeitorDetectado;
+        private Label labelBiometriaStatus;
         private PictureBox pictureBoxFingerprintIcon;
         private byte[] _biometriaCapturada;
 
@@ -86,7 +90,7 @@ namespace BiometricSystem.Forms
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
-            this.BackColor = System.Drawing.Color.FromArgb(240, 240, 240);
+            this.BackColor = System.Drawing.Color.FromArgb(245, 246, 248);
 
             // Label Título
             Label labelTitulo = new Label();
@@ -134,15 +138,26 @@ namespace BiometricSystem.Forms
             labelCooperadoSelecionado.ForeColor = System.Drawing.Color.FromArgb(33, 33, 33);
             this.Controls.Add(labelCooperadoSelecionado);
 
+            // Status Biometria
+            labelBiometriaStatus = new Label();
+            labelBiometriaStatus.Text = "Biometria: --";
+            labelBiometriaStatus.Location = new System.Drawing.Point(20, 210);
+            labelBiometriaStatus.Size = new System.Drawing.Size(540, 25);
+            labelBiometriaStatus.Font = new System.Drawing.Font("Arial", 9, System.Drawing.FontStyle.Bold);
+            labelBiometriaStatus.ForeColor = System.Drawing.Color.FromArgb(120, 120, 120);
+            labelBiometriaStatus.BackColor = System.Drawing.Color.FromArgb(235, 235, 235);
+            labelBiometriaStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.Controls.Add(labelBiometriaStatus);
+
             // CPF
             Label labelCPF = new Label();
             labelCPF.Text = "CPF:";
-            labelCPF.Location = new System.Drawing.Point(20, 215);
+            labelCPF.Location = new System.Drawing.Point(20, 245);
             labelCPF.Size = new System.Drawing.Size(260, 20);
             this.Controls.Add(labelCPF);
 
             textBoxCPF = new TextBox();
-            textBoxCPF.Location = new System.Drawing.Point(20, 240);
+            textBoxCPF.Location = new System.Drawing.Point(20, 270);
             textBoxCPF.Size = new System.Drawing.Size(260, 30);
             textBoxCPF.Font = new System.Drawing.Font("Arial", 11);
             textBoxCPF.ReadOnly = true;
@@ -152,12 +167,12 @@ namespace BiometricSystem.Forms
             // Email
             Label labelEmail = new Label();
             labelEmail.Text = "E-mail:";
-            labelEmail.Location = new System.Drawing.Point(300, 215);
+            labelEmail.Location = new System.Drawing.Point(300, 245);
             labelEmail.Size = new System.Drawing.Size(260, 20);
             this.Controls.Add(labelEmail);
 
             textBoxEmail = new TextBox();
-            textBoxEmail.Location = new System.Drawing.Point(300, 240);
+            textBoxEmail.Location = new System.Drawing.Point(300, 270);
             textBoxEmail.Size = new System.Drawing.Size(260, 30);
             textBoxEmail.Font = new System.Drawing.Font("Arial", 11);
             textBoxEmail.ReadOnly = true;
@@ -167,12 +182,12 @@ namespace BiometricSystem.Forms
             // Telefone
             Label labelTelefone = new Label();
             labelTelefone.Text = "Telefone:";
-            labelTelefone.Location = new System.Drawing.Point(20, 285);
+            labelTelefone.Location = new System.Drawing.Point(20, 315);
             labelTelefone.Size = new System.Drawing.Size(540, 20);
             this.Controls.Add(labelTelefone);
 
             textBoxTelefone = new TextBox();
-            textBoxTelefone.Location = new System.Drawing.Point(20, 310);
+            textBoxTelefone.Location = new System.Drawing.Point(20, 340);
             textBoxTelefone.Size = new System.Drawing.Size(540, 30);
             textBoxTelefone.Font = new System.Drawing.Font("Arial", 11);
             textBoxTelefone.ReadOnly = true;
@@ -181,7 +196,7 @@ namespace BiometricSystem.Forms
 
             // Ícone de Impressão Digital
             pictureBoxFingerprintIcon = new PictureBox();
-            pictureBoxFingerprintIcon.Location = new System.Drawing.Point(20, 360);
+            pictureBoxFingerprintIcon.Location = new System.Drawing.Point(20, 390);
             pictureBoxFingerprintIcon.Size = new System.Drawing.Size(60, 60);
             pictureBoxFingerprintIcon.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBoxFingerprintIcon.BackColor = System.Drawing.Color.Transparent;
@@ -191,7 +206,7 @@ namespace BiometricSystem.Forms
             // Botão Capturar Digital
             buttonCapturarDigital = new Button();
             buttonCapturarDigital.Text = "☝️ Capturar Digital";
-            buttonCapturarDigital.Location = new System.Drawing.Point(90, 360);
+            buttonCapturarDigital.Location = new System.Drawing.Point(90, 390);
             buttonCapturarDigital.Size = new System.Drawing.Size(470, 60);
             buttonCapturarDigital.Font = new System.Drawing.Font("Arial", 12, System.Drawing.FontStyle.Bold);
             buttonCapturarDigital.BackColor = System.Drawing.Color.FromArgb(33, 150, 243);
@@ -203,7 +218,7 @@ namespace BiometricSystem.Forms
             // Label Status
             labelStatus = new Label();
             labelStatus.Text = "⏳ Carregando cooperados...";
-            labelStatus.Location = new System.Drawing.Point(20, 435);
+            labelStatus.Location = new System.Drawing.Point(20, 465);
             labelStatus.Size = new System.Drawing.Size(540, 30);
             labelStatus.Font = new System.Drawing.Font("Arial", 10);
             labelStatus.AutoSize = true;
@@ -213,7 +228,7 @@ namespace BiometricSystem.Forms
             // Label Leitor Detectado
             labelLeitorDetectado = new Label();
             labelLeitorDetectado.Text = "☑ Leitor biométrico detectado";
-            labelLeitorDetectado.Location = new System.Drawing.Point(20, 470);
+            labelLeitorDetectado.Location = new System.Drawing.Point(20, 495);
             labelLeitorDetectado.Size = new System.Drawing.Size(300, 20);
             labelLeitorDetectado.Font = new System.Drawing.Font("Arial", 9);
             labelLeitorDetectado.ForeColor = System.Drawing.Color.Green;
@@ -222,7 +237,7 @@ namespace BiometricSystem.Forms
             // Botão Salvar
             buttonSalvar = new Button();
             buttonSalvar.Text = "💾 Salvar Biometria";
-            buttonSalvar.Location = new System.Drawing.Point(20, 510);
+            buttonSalvar.Location = new System.Drawing.Point(20, 530);
             buttonSalvar.Size = new System.Drawing.Size(260, 45);
             buttonSalvar.Font = new System.Drawing.Font("Arial", 11, System.Drawing.FontStyle.Bold);
             buttonSalvar.BackColor = System.Drawing.Color.FromArgb(76, 175, 80);
@@ -234,13 +249,128 @@ namespace BiometricSystem.Forms
             // Botão Cancelar
             buttonCancelar = new Button();
             buttonCancelar.Text = "❌ Cancelar";
-            buttonCancelar.Location = new System.Drawing.Point(300, 510);
+            buttonCancelar.Location = new System.Drawing.Point(300, 530);
             buttonCancelar.Size = new System.Drawing.Size(260, 45);
             buttonCancelar.Font = new System.Drawing.Font("Arial", 11, System.Drawing.FontStyle.Bold);
             buttonCancelar.BackColor = System.Drawing.Color.FromArgb(244, 67, 54);
             buttonCancelar.ForeColor = System.Drawing.Color.White;
             buttonCancelar.Click += ButtonCancelar_Click;
             this.Controls.Add(buttonCancelar);
+
+            // Botão Limpar Biometria
+            buttonLimparBiometria = new Button();
+            buttonLimparBiometria.Text = "🧹 Limpar Biometria";
+            buttonLimparBiometria.Location = new System.Drawing.Point(20, 585);
+            buttonLimparBiometria.Size = new System.Drawing.Size(520, 45);
+            buttonLimparBiometria.Font = new System.Drawing.Font("Arial", 11, System.Drawing.FontStyle.Bold);
+            buttonLimparBiometria.BackColor = System.Drawing.Color.FromArgb(255, 152, 0);
+            buttonLimparBiometria.ForeColor = System.Drawing.Color.White;
+            buttonLimparBiometria.Enabled = false;
+            buttonLimparBiometria.Click += ButtonLimparBiometria_Click;
+            this.Controls.Add(buttonLimparBiometria);
+
+            AplicarEstiloModerno();
+        }
+
+        private void AplicarEstiloModerno()
+        {
+            Color primary = Color.FromArgb(33, 150, 243);
+            Color success = Color.FromArgb(76, 175, 80);
+            Color danger = Color.FromArgb(244, 67, 54);
+            Color warning = Color.FromArgb(255, 152, 0);
+            Color neutral = Color.FromArgb(96, 125, 139);
+
+            buttonRecarregar.BackColor = neutral;
+            buttonCapturarDigital.BackColor = primary;
+            buttonSalvar.BackColor = success;
+            buttonCancelar.BackColor = danger;
+            buttonLimparBiometria.BackColor = warning;
+
+            foreach (var btn in new[] { buttonRecarregar, buttonCapturarDigital, buttonSalvar, buttonCancelar, buttonLimparBiometria })
+            {
+                btn.FlatStyle = FlatStyle.Flat;
+                btn.FlatAppearance.BorderSize = 0;
+                btn.ForeColor = Color.White;
+                btn.Cursor = Cursors.Hand;
+                RoundControl(btn, 8);
+            }
+
+            comboBoxCooperados.BackColor = Color.White;
+            textBoxCPF.BackColor = Color.FromArgb(245, 245, 245);
+            textBoxEmail.BackColor = Color.FromArgb(245, 245, 245);
+            textBoxTelefone.BackColor = Color.FromArgb(245, 245, 245);
+
+            labelBiometriaStatus.Padding = new Padding(8, 0, 0, 0);
+            RoundControl(labelBiometriaStatus, 6);
+        }
+
+        private void RoundControl(Control control, int radius)
+        {
+            if (control.Width == 0 || control.Height == 0)
+            {
+                return;
+            }
+
+            var rect = new Rectangle(0, 0, control.Width, control.Height);
+            int d = radius * 2;
+
+            using (var path = new GraphicsPath())
+            {
+                path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+                path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+                path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+                path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+                path.CloseFigure();
+
+                control.Region = new Region(path);
+            }
+        }
+
+        private async Task AtualizarStatusBiometriaAsync()
+        {
+            if (_cooperadoSelecionado == null)
+            {
+                labelBiometriaStatus.Text = "Biometria: --";
+                labelBiometriaStatus.ForeColor = Color.FromArgb(120, 120, 120);
+                labelBiometriaStatus.BackColor = Color.FromArgb(235, 235, 235);
+                buttonLimparBiometria.Enabled = false;
+                return;
+            }
+
+            labelBiometriaStatus.Text = "Biometria: verificando...";
+            labelBiometriaStatus.ForeColor = Color.FromArgb(80, 80, 80);
+            labelBiometriaStatus.BackColor = Color.FromArgb(235, 235, 235);
+
+            bool existeLocal = false;
+            bool existeNeon = false;
+
+            try
+            {
+                DatabaseHelper db = new DatabaseHelper();
+                existeLocal = db.TemBiometriaLocal(_cooperadoSelecionado.Id);
+            }
+            catch { }
+
+            try
+            {
+                existeNeon = await _neonCooperadoHelper.TemBiometriaAsync(_cooperadoSelecionado.Id);
+            }
+            catch { }
+
+            if (existeLocal || existeNeon)
+            {
+                labelBiometriaStatus.Text = $"Biometria: CADASTRADA (Local: {(existeLocal ? "Sim" : "Não")} | NEON: {(existeNeon ? "Sim" : "Não")})";
+                labelBiometriaStatus.ForeColor = Color.FromArgb(27, 94, 32);
+                labelBiometriaStatus.BackColor = Color.FromArgb(200, 230, 201);
+                buttonLimparBiometria.Enabled = true;
+            }
+            else
+            {
+                labelBiometriaStatus.Text = "Biometria: NÃO CADASTRADA";
+                labelBiometriaStatus.ForeColor = Color.FromArgb(183, 28, 28);
+                labelBiometriaStatus.BackColor = Color.FromArgb(255, 205, 210);
+                buttonLimparBiometria.Enabled = false;
+            }
         }
 
         protected override void OnLoad(EventArgs e)
@@ -330,6 +460,7 @@ namespace BiometricSystem.Forms
                 buttonCapturarDigital.Enabled = false;
                 _cooperadoSelecionado = null;
                 labelCooperadoSelecionado.Text = "Selecione um cooperado para visualizar os dados";
+                _ = AtualizarStatusBiometriaAsync();
                 return;
             }
 
@@ -345,6 +476,7 @@ namespace BiometricSystem.Forms
             // Habilitar botão de captura
             buttonCapturarDigital.Enabled = true;
             labelStatus.Text = $"✓ Cooperado selecionado: {_cooperadoSelecionado.Nome}";
+            _ = AtualizarStatusBiometriaAsync();
         }
 
         private async void ButtonCapturarDigital_Click(object sender, EventArgs e)
@@ -484,6 +616,7 @@ namespace BiometricSystem.Forms
 
                 if (sucessoLocal)
                 {
+                    string cooperadoId = _cooperadoSelecionado.Id;
                     MessageBox.Show(
                         $"✓ Biometria registrada com sucesso!\n\n" +
                         $"Cooperado: {_cooperadoSelecionado.Nome}\n" +
@@ -497,8 +630,10 @@ namespace BiometricSystem.Forms
                     LimparCampos();
                     labelStatus.Text = "✅ Cadastro concluído com sucesso!";
 
+                    _ = AtualizarStatusBiometriaAsync();
+
                     // Sincronizar com NEON em background (não bloqueia)
-                    _ = SincronizarBiometriaComNeonAsync(_cooperadoSelecionado.Id);
+                    _ = SincronizarBiometriaComNeonAsync(cooperadoId);
                 }
                 else
                 {
@@ -590,6 +725,67 @@ namespace BiometricSystem.Forms
             }
         }
 
+        private async void ButtonLimparBiometria_Click(object sender, EventArgs e)
+        {
+            if (_cooperadoSelecionado == null)
+            {
+                MessageBox.Show("Selecione um cooperado primeiro!", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "Deseja remover a biometria deste cooperado?\n\nEssa ação apaga a biometria local e no NEON.",
+                "Confirmar remoção",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            buttonLimparBiometria.Enabled = false;
+            labelStatus.Text = "🧹 Removendo biometria...";
+            Application.DoEvents();
+
+            int removidasLocal = 0;
+            int removidasNeon = 0;
+            string erroLocal = string.Empty;
+
+            try
+            {
+                DatabaseHelper db = new DatabaseHelper();
+                removidasLocal = db.RemoverBiometriasLocal(_cooperadoSelecionado.Id, out erroLocal);
+            }
+            catch (Exception ex)
+            {
+                erroLocal = ex.Message;
+            }
+
+            try
+            {
+                removidasNeon = await _neonCooperadoHelper.RemoverBiometriasAsync(_cooperadoSelecionado.Id);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Erro ao remover biometria no NEON: {ex.Message}");
+            }
+
+            if (!string.IsNullOrEmpty(erroLocal))
+            {
+                MessageBox.Show(
+                    $"Erro ao remover biometria local:\n{erroLocal}",
+                    "Erro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            }
+
+            labelStatus.Text = $"✅ Biometria removida (Local: {removidasLocal} | NEON: {removidasNeon})";
+            await AtualizarStatusBiometriaAsync();
+        }
+
         private void ButtonCancelar_Click(object sender, EventArgs e)
         {
             LimparCampos();
@@ -612,6 +808,10 @@ namespace BiometricSystem.Forms
             buttonCapturarDigital.Enabled = false;
             buttonSalvar.Enabled = false;
             labelCooperadoSelecionado.Text = "Selecione um cooperado para visualizar os dados";
+            labelBiometriaStatus.Text = "Biometria: --";
+            labelBiometriaStatus.ForeColor = Color.FromArgb(120, 120, 120);
+            labelBiometriaStatus.BackColor = Color.FromArgb(235, 235, 235);
+            buttonLimparBiometria.Enabled = false;
         }
 
         private void InitializeComponent()

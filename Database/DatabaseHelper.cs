@@ -681,6 +681,58 @@ namespace BiometricSystem.Database
             return SalvarBiometriaLocal(cooperadoId, cooperadoNome, template, out _, hash);
         }
 
+        /// <summary>
+        /// Verifica se o cooperado possui biometria cadastrada localmente
+        /// </summary>
+        public bool TemBiometriaLocal(string cooperadoId)
+        {
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                string query = "SELECT COUNT(*) FROM Biometrias WHERE CooperadoId = @CooperadoId";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                var result = cmd.ExecuteScalar();
+
+                if (result != null && int.TryParse(result.ToString(), out int count))
+                {
+                    return count > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao verificar biometria local: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Remove biometrias locais de um cooperado (apaga templates e hashes)
+        /// </summary>
+        public int RemoverBiometriasLocal(string cooperadoId, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+            try
+            {
+                using var connection = new SQLiteConnection(connectionString);
+                connection.Open();
+
+                string query = "DELETE FROM Biometrias WHERE CooperadoId = @CooperadoId";
+                using var cmd = new SQLiteCommand(query, connection);
+                cmd.Parameters.AddWithValue("@CooperadoId", cooperadoId);
+                return cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                System.Diagnostics.Debug.WriteLine($"Erro ao remover biometria local: {ex.Message}");
+                return 0;
+            }
+        }
+
         public bool TemRegistroRecente(string cooperadoId, int segundosMinimos = 30)
         {
             try
