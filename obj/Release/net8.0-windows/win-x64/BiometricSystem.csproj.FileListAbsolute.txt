@@ -54,3 +54,4 @@ C:\Users\PcGabriel\Downloads\Sistema_Desktop-main\Sistema_Desktop-main\obj\Relea
 C:\Users\PcGabriel\Downloads\Sistema_Desktop-main\Sistema_Desktop-main\obj\Release\net8.0-windows\win-x64\BiometricSystem.pdb
 C:\Users\PcGabriel\Downloads\Sistema_Desktop-main\Sistema_Desktop-main\obj\Release\net8.0-windows\win-x64\BiometricSystem.genruntimeconfig.cache
 C:\Users\PcGabriel\Downloads\Sistema_Desktop-main\Sistema_Desktop-main\obj\Release\net8.0-windows\win-x64\ref\BiometricSystem.dll
+C:\Users\PcGabriel\Downloads\Sistema_Desktop-main\Sistema_Desktop-main\obj\Release\net8.0-windows\win-x64\BiometricSystem.sourcelink.json
