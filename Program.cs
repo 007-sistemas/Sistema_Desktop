@@ -29,6 +29,7 @@ namespace BiometricSystem
                     string modelPath = Path.Combine(exeDir, "appsettings.json");
                     if (File.Exists(modelPath))
                     {
+<<<<<<< HEAD
                         try 
                         { 
                             File.Copy(modelPath, appSettingsPath, true);
@@ -39,11 +40,20 @@ namespace BiometricSystem
                             System.Diagnostics.Debug.WriteLine($"❌ Erro ao copiar appsettings.json: {copyEx.Message}");
                             // Se falhar, cria um novo com a string padrão
                             File.WriteAllText(appSettingsPath, "{\"Neon\":{\"ConnectionString\":\"Host=ep-dry-dawn-ahl0dlm6-pooler.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_lOhyE4z1QBtc;SSL Mode=Require;Trust Server Certificate=true\"},\"Hospital\":{},\"Logging\":{\"LogLevel\":{\"Default\":\"Information\"}}}\n");
+=======
+                        try { File.Copy(modelPath, appSettingsPath, true); }
+                        catch { /* Se falhar, cria um novo padrão mínimo */
+                            File.WriteAllText(appSettingsPath, "{\"Neon\":{\"ConnectionString\":\"\"},\"Hospital\":{},\"Logging\":{\"LogLevel\":{\"Default\":\"Information\"}}}\n");
+>>>>>>> 284890dc0bdfd4337dc1e38b5dd5d62aa158dfd5
                         }
                     }
                     else
                     {
+<<<<<<< HEAD
                         File.WriteAllText(appSettingsPath, "{\"Neon\":{\"ConnectionString\":\"Host=ep-dry-dawn-ahl0dlm6-pooler.c-3.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_lOhyE4z1QBtc;SSL Mode=Require;Trust Server Certificate=true\"},\"Hospital\":{},\"Logging\":{\"LogLevel\":{\"Default\":\"Information\"}}}\n");
+=======
+                        File.WriteAllText(appSettingsPath, "{\"Neon\":{\"ConnectionString\":\"\"},\"Hospital\":{},\"Logging\":{\"LogLevel\":{\"Default\":\"Information\"}}}\n");
+>>>>>>> 284890dc0bdfd4337dc1e38b5dd5d62aa158dfd5
                     }
                 }
 

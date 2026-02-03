@@ -10,7 +10,11 @@
     <RootNamespace>BiometricSystem</RootNamespace>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RollForward>LatestMajor</RollForward>
+<<<<<<< HEAD
     <ApplicationIcon>iDevlogo.ico</ApplicationIcon>
+=======
+    <ApplicationIcon>iDev-logo-branco.ico</ApplicationIcon>
+>>>>>>> 284890dc0bdfd4337dc1e38b5dd5d62aa158dfd5
   </PropertyGroup>
 
   <!-- Referências ao DigitalPersona SDK -->
@@ -41,6 +45,7 @@
     <PackageReference Include="System.Data.SQLite" Version="2.0.2" />
   </ItemGroup>
 
+<<<<<<< HEAD
   <!-- Copiar appsettings.json para a pasta de saída -->
   <ItemGroup>
     <None Update="appsettings.json">
@@ -55,4 +60,6 @@
     </None>
   </ItemGroup>
 
+=======
+>>>>>>> 284890dc0bdfd4337dc1e38b5dd5d62aa158dfd5
 </Project>
